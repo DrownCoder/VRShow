@@ -38,9 +38,11 @@ public class MainActivity extends AppCompatActivity {
     private RotateModel angle;
     private RotateModel lastAngle;
     //双指缩放
-    private double lastSpacing;
+    private int mode;
+    private double lastScale;
     private double downSpacing;
     private double upSpacing;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,9 +84,10 @@ public class MainActivity extends AppCompatActivity {
     private void init() {
         wHeight = ScreenUtil.getWindowDisplay(this).getHeight();
         wWidth = ScreenUtil.getWindowDisplay(this).getWidth();
+        Log.i("差值", "宽："+wWidth+"高："+wHeight);
         angle = new RotateModel();
         lastAngle = new RotateModel();
-        lastSpacing = 1.0;//屏幕宽度对应一倍大小
+        lastScale = glRenderer.getStandScale();//初始大小
     }
 
     private void initEvent() {
@@ -96,22 +99,15 @@ public class MainActivity extends AppCompatActivity {
         public boolean onTouch(View v, MotionEvent event) {
             float x = event.getX();
             float y = event.getY();
-            double curSapcing = lastSpacing;
-            switch (event.getAction()) {
+            double curScale = lastScale;
+            switch (event.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_DOWN:
+                    mode = 1;
                     lastX = x;
                     lastY = y;
                     break;
-                case MotionEvent.ACTION_MOVE:
-                    //绕x轴移动
-                    angle.xAngle = (x - lastX) / wWidth * 180.0f;
-                    //绕y轴移动
-                    angle.yAngle = (y - lastY) / wHeight * 180.0f;
-                    angle.xAngle = (angle.xAngle + lastAngle.xAngle) % 360.0f;
-                    angle.yAngle = (angle.yAngle + lastAngle.yAngle) % 360.0f;
-                    rotate(angle);
-                    break;
                 case MotionEvent.ACTION_UP:
+                    mode = 0;
                     lastAngle.xAngle = angle.xAngle;
                     lastAngle.yAngle = angle.yAngle;
                     lastAngle.zAngle = angle.zAngle;
@@ -119,20 +115,41 @@ public class MainActivity extends AppCompatActivity {
                     lastY = y;
                     break;
                 case MotionEvent.ACTION_POINTER_DOWN:
+                    mode += 1;
                     downSpacing = spacing(event);
                     break;
                 case MotionEvent.ACTION_POINTER_UP:
-                    upSpacing = spacing(event);
-                    Log.i("差值", (upSpacing - downSpacing) + "");
-                    if ((upSpacing - downSpacing) > 0) {//放大
-                        curSapcing += (upSpacing - downSpacing) / (wWidth / 2);
-                    } else {//缩小
-                        curSapcing -= (upSpacing - downSpacing) / (wWidth / 2);
+                    mode = -1;
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    if(mode == -1) return true;
+                    if (mode >= 2) {//双指
+                        upSpacing = spacing(event);
+                        Log.i("差值", Math.abs(upSpacing - downSpacing) + "");
+                        if ((upSpacing - downSpacing) > 0) {//放大
+                            curScale += Math.abs(upSpacing - downSpacing) / wHeight;
+                        } else {//缩小
+                            curScale -= Math.abs(upSpacing - downSpacing) / wHeight;
+                        }
+                        if (curScale < 1) {
+                            curScale = 1;
+                        }
+                        if (curScale > 3) {
+                            curScale = 3;
+                        }
+                        Log.i("缩放值", "curScale:" + curScale);
+                        scale(curScale * glRenderer.getStandScale());
+                        lastScale = curScale;
+                        downSpacing = upSpacing;
+                    } else {//单指
+                        //绕x轴移动
+                        angle.xAngle = (x - lastX) / wWidth * 180.0f;
+                        //绕y轴移动
+                        angle.yAngle = (y - lastY) / wHeight * 180.0f;
+                        angle.xAngle = (angle.xAngle + lastAngle.xAngle) % 360.0f;
+                        angle.yAngle = (angle.yAngle + lastAngle.yAngle) % 360.0f;
+                        rotate(angle);
                     }
-                    Log.i("差值", "curSpacing:" + curSapcing);
-
-                    scale(curSapcing * glRenderer.getStandScale());
-                    lastSpacing = curSapcing;
                     break;
             }
             return true;
