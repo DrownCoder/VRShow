@@ -1,8 +1,10 @@
 package com.study.xuan.vrshow;
 
 import android.app.ActivityManager;
+import android.content.Context;
 import android.content.pm.ConfigurationInfo;
 import android.hardware.Sensor;
+import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.opengl.GLSurfaceView;
@@ -42,7 +44,11 @@ public class MainActivity extends AppCompatActivity {
     private double lastScale;
     private double downSpacing;
     private double upSpacing;
-
+    //传感器
+    private float timestamp;
+    private final float[] tempAngle = new float[3];
+    // 创建常量，把纳秒转换为秒。
+    private static final float NS2S = 1.0f / 1000000000.0f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void initEvent() {
         glView.setOnTouchListener(onTouchListener);
+        initSensor();
     }
 
     View.OnTouchListener onTouchListener = new View.OnTouchListener() {
@@ -102,11 +109,14 @@ public class MainActivity extends AppCompatActivity {
             double curScale = lastScale;
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
                 case MotionEvent.ACTION_DOWN:
+                    sensorManager.unregisterListener(sensorEventListener);
                     mode = 1;
                     lastX = x;
                     lastY = y;
                     break;
                 case MotionEvent.ACTION_UP:
+                    sensorManager.registerListener(sensorEventListener, gyroscopeSensor, SensorManager
+                            .SENSOR_DELAY_FASTEST);
                     mode = 0;
                     lastAngle.xAngle = angle.xAngle;
                     lastAngle.yAngle = angle.yAngle;
@@ -115,10 +125,13 @@ public class MainActivity extends AppCompatActivity {
                     lastY = y;
                     break;
                 case MotionEvent.ACTION_POINTER_DOWN:
+                    sensorManager.unregisterListener(sensorEventListener);
                     mode += 1;
                     downSpacing = spacing(event);
                     break;
                 case MotionEvent.ACTION_POINTER_UP:
+                    sensorManager.registerListener(sensorEventListener, gyroscopeSensor, SensorManager
+                            .SENSOR_DELAY_FASTEST);
                     mode = -1;
                     break;
                 case MotionEvent.ACTION_MOVE:
@@ -171,31 +184,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /*private void initSensor() {
+    private void initSensor() {
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         sensorEventListener = new SensorEventListener() {
             @Override
-            public void onSensorChanged(SensorEvent event) {
-                if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+            public void onSensorChanged(SensorEvent sensorEvent) {
+                if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
                     if (timestamp != 0) {
-                        final float dT = (event.timestamp - timestamp) * NS2S;
-                        angle[0] += event.values[0] * dT;
-                        angle[1] += event.values[1] * dT;
-                        angle[2] += event.values[2] * dT;
-                        float anglex = (float) Math.toDegrees(angle[0]);
-                        float angley = (float) Math.toDegrees(angle[1]);
-                        float anglez = (float) Math.toDegrees(angle[2]);
-                        Sensordt info = new Sensordt();
-                        info.setSensorX(angley);
-                        info.setSensorY(anglex);
-                        info.setSensorZ(anglez);
-                        Message msg = new Message();
-                        msg.what = 101;
-                        msg.obj = info;
-                        mHandler.sendMessage(msg);
+                        final float dT = (sensorEvent.timestamp - timestamp) * NS2S;
+                        tempAngle[0] += sensorEvent.values[0] * dT;
+                        tempAngle[1] += sensorEvent.values[1] * dT;
+                        tempAngle[2] += sensorEvent.values[2] * dT;
+                        angle.xAngle = (float) Math.toDegrees(tempAngle[0]);
+                        angle.yAngle = (float) Math.toDegrees(tempAngle[1]);
+                        angle.zAngle = (float) Math.toDegrees(tempAngle[2]);
+                        rotate(angle);
                     }
-                    timestamp = event.timestamp;
+                    timestamp = sensorEvent.timestamp;
+                    /*//绕x轴移动
+                    angle.xAngle = (event.values[0] - lastX) / wWidth * 180.0f;
+                    //绕y轴移动
+                    angle.yAngle = (event.values[1] - lastY) / wHeight * 180.0f;
+                    angle.xAngle = (angle.xAngle + lastAngle.xAngle) % 360.0f;
+                    angle.yAngle = (angle.yAngle + lastAngle.yAngle) % 360.0f;
+                    rotate(angle);*/
                 }
             }
 
@@ -206,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
         };
         sensorManager.registerListener(sensorEventListener, gyroscopeSensor, SensorManager
         .SENSOR_DELAY_FASTEST);
-    }*/
+    }
 
     public void rotate(RotateModel angle) {
         glRenderer.rotate(angle);
