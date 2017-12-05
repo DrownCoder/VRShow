@@ -1,4 +1,4 @@
-package com.study.xuan.vrshow;
+package com.study.xuan.vrshow.util;
 
 import android.content.Context;
 import android.view.Display;

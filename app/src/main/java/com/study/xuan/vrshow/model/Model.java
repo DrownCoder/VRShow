@@ -1,6 +1,6 @@
 package com.study.xuan.vrshow.model;
 
-import com.study.xuan.vrshow.Util;
+import com.study.xuan.vrshow.util.Util;
 
 import java.nio.FloatBuffer;
 

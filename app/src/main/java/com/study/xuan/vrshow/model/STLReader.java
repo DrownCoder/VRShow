@@ -2,8 +2,7 @@ package com.study.xuan.vrshow.model;
 
 import android.content.Context;
 
-import com.study.xuan.vrshow.Util;
-import com.study.xuan.vrshow.model.Model;
+import com.study.xuan.vrshow.util.Util;
 
 import java.io.File;
 import java.io.FileInputStream;

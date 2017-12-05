@@ -21,6 +21,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.study.xuan.vrshow.model.RotateModel;
+import com.study.xuan.vrshow.util.ScreenUtil;
 
 public class MainActivity extends AppCompatActivity {
     private boolean supportsEs2;
@@ -193,22 +194,12 @@ public class MainActivity extends AppCompatActivity {
                 if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
                     if (timestamp != 0) {
                         final float dT = (sensorEvent.timestamp - timestamp) * NS2S;
-                        tempAngle[0] += sensorEvent.values[0] * dT;
-                        tempAngle[1] += sensorEvent.values[1] * dT;
-                        tempAngle[2] += sensorEvent.values[2] * dT;
-                        angle.xAngle = (float) Math.toDegrees(tempAngle[0]);
-                        angle.yAngle = (float) Math.toDegrees(tempAngle[1]);
-                        angle.zAngle = (float) Math.toDegrees(tempAngle[2]);
+                        angle.yAngle += sensorEvent.values[0] * dT * 180.0f % 360.0f;
+                        angle.xAngle += sensorEvent.values[1] * dT * 180.0f % 360.0f;
+                        angle.zAngle += sensorEvent.values[2] * dT * 180.0f % 360.0f;
                         rotate(angle);
                     }
                     timestamp = sensorEvent.timestamp;
-                    /*//绕x轴移动
-                    angle.xAngle = (event.values[0] - lastX) / wWidth * 180.0f;
-                    //绕y轴移动
-                    angle.yAngle = (event.values[1] - lastY) / wHeight * 180.0f;
-                    angle.xAngle = (angle.xAngle + lastAngle.xAngle) % 360.0f;
-                    angle.yAngle = (angle.yAngle + lastAngle.yAngle) % 360.0f;
-                    rotate(angle);*/
                 }
             }
 
@@ -229,29 +220,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        /*if (glView != null) {
-            glView.onResume();
-
-            //不断改变rotateDegreen值，实现旋转
-            new Thread() {
-                @Override
-                public void run() {
-                    while (true) {
-                        try {
-                            sleep(100);
-
-                            rotateDegreen += 5;
-                            handler.sendEmptyMessage(0x001);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-                }
-            }.start();
-        }*/
-
-
     }
 
     private void checkSupported() {
@@ -274,6 +242,7 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
         if (glView != null) {
             glView.onPause();
+            sensorManager.unregisterListener(sensorEventListener);
         }
     }
 
