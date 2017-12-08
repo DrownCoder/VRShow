@@ -32,8 +32,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
     public GLRenderer(Context context) {
         try {
-
-            model = new STLReader().parserBinStlInAssets(context, "bai.stl");
+            model = new STLReader().parserBinStlInAssets(context, "BelleBook_Big.stl");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -64,9 +63,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         //眼睛对着原点看
         GLU.gluLookAt(gl, eye.x, eye.y, eye.z, center.x,
                 center.y, center.z, up.x, up.y, up.z);
-
-        //为了能有立体感觉，通过改变mDegree值，让模型不断旋转
-
+        //旋转
         gl.glRotatef(mDegree.xAngle, 0, mDegree.xAngle, 0);
         gl.glRotatef(mDegree.yAngle, mDegree.yAngle, 0, 0);
         gl.glRotatef(mDegree.zAngle, 0, 0, mDegree.zAngle);

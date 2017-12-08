@@ -2,12 +2,15 @@ package com.study.xuan.vrshow.model;
 
 import android.content.Context;
 
+import com.study.xuan.vrshow.util.IOUtils;
 import com.study.xuan.vrshow.util.Util;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Package com.hc.opengl
@@ -16,9 +19,19 @@ import java.io.InputStream;
 public class STLReader {
     private StlLoadListener stlLoadListener;
 
-    public Model parserBinStlInSDCard(String path)
-                             throws IOException {
+    List<Float> normalList;
+    public float maxX;
+    public float maxY;
+    public float maxZ;
+    public float minX;
+    public float minY;
+    public float minZ;
+    //优化使用的数组
+    private float[] normal_array = null;
+    private float[] vertex_array = null;
+    private int vertext_size = 0;
 
+    public Model parserBinStlInSDCard(String path) throws IOException {
         File file = new File(path);
         FileInputStream fis = new FileInputStream(file);
         return parserBinStl(fis);
@@ -28,8 +41,68 @@ public class STLReader {
                             throws IOException {
 
         InputStream is = context.getAssets().open(fileName);
+        if (isText(Util.toByteArray(is))) {
+            return parserAsciiStl(is);
+        }
         return parserBinStl(is);
     }
+
+    public Model parserAsciiStlAssets(Context context, String fileName) throws IOException {
+        InputStream is = context.getAssets().open(fileName);
+        return parserAsciiStl(is);
+    }
+
+    private Model parserAsciiStl(InputStream is) throws IOException {
+        byte[] bytes = IOUtils.toByteArray(is);
+        Model model = new Model();
+        String stlText = new String(bytes);
+        List<Float> vertexList = new ArrayList<Float>();
+        //normalList.clear();
+
+        String[] stlLines = stlText.split("\n");
+        vertext_size = (stlLines.length - 2) / 7;
+        vertex_array = new float[vertext_size * 9];
+        normal_array = new float[vertext_size * 9];
+        //progressDialog.setMax(stlLines.length);
+
+        int normal_num = 0;
+        int vertex_num = 0;
+        for (int i = 0; i < stlLines.length; i++) {
+            String string = stlLines[i].trim();
+            if (string.startsWith("facet normal ")) {
+                string = string.replaceFirst("facet normal ", "");
+                String[] normalValue = string.split(" ");
+                for (int n = 0; n < 3; n++) {
+                    normal_array[normal_num++] = Float.parseFloat(normalValue[0]);
+                    normal_array[normal_num++] = Float.parseFloat(normalValue[1]);
+                    normal_array[normal_num++] = Float.parseFloat(normalValue[2]);
+                }
+            }
+            if (string.startsWith("vertex ")) {
+                string = string.replaceFirst("vertex ", "");
+                String[] vertexValue = string.split(" ");
+                float x = Float.parseFloat(vertexValue[0]);
+                float y = Float.parseFloat(vertexValue[1]);
+                float z = Float.parseFloat(vertexValue[2]);
+                adjustMaxMin(x, y, z);
+                vertex_array[vertex_num++] = x;
+                vertex_array[vertex_num++] = y;
+                vertex_array[vertex_num++] = z;
+            }
+
+            /*if (i % (stlLines.length / 50) == 0) {
+                //publishProgress(i);
+            }*/
+        }
+        //将读取的数据设置到Model对象中
+        model.setMax(maxX, maxY, maxZ);
+        model.setMin(minX, minY, minZ);
+        model.setFacetCount(vertext_size);
+        model.setVerts(vertex_array);
+        model.setVnorms(normal_array);
+        return model;
+    }
+
     //解析二进制的Stl文件
     public Model parserBinStl(InputStream in) throws IOException {
         if (stlLoadListener != null)
@@ -144,6 +217,41 @@ public class STLReader {
         model.setVnorms(vnorms);
         model.setRemarks(remarks);
 
+    }
+
+    private void adjustMaxMin(float x, float y, float z) {
+        if (x > maxX) {
+            maxX = x;
+        }
+        if (y > maxY) {
+            maxY = y;
+        }
+        if (z > maxZ) {
+            maxZ = z;
+        }
+        if (x < minX) {
+            minX = x;
+        }
+        if (y < minY) {
+            minY = y;
+        }
+        if (z < minZ) {
+            minZ = z;
+        }
+    }
+
+    boolean isText(byte[] bytes) {
+        for (byte b : bytes) {
+            if (b == 0x0a || b == 0x0d || b == 0x09) {
+                // white spaces
+                continue;
+            }
+            if (b < 0x20 || (0xff & b) >= 0x80) {
+                // control codes
+                return false;
+            }
+        }
+        return true;
     }
 
     public static interface StlLoadListener {

@@ -88,6 +88,18 @@ public class Model {
         this.remarks = remarks;
     }
 
+    public void setMax(float maxX, float maxY, float maxZ) {
+        this.maxX = maxX;
+        this.maxY = maxY;
+        this.maxZ = maxZ;
+    }
+
+    public void setMin(float minX, float minY, float minZ) {
+        this.minX = minX;
+        this.minY = minY;
+        this.minZ = minZ;
+    }
+
     public FloatBuffer getVertBuffer() {
         return vertBuffer;
     }
