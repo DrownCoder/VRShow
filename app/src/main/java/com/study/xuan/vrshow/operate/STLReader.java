@@ -1,10 +1,13 @@
-package com.study.xuan.vrshow.model;
+package com.study.xuan.vrshow.operate;
 
 import android.content.Context;
 
+import com.study.xuan.vrshow.model.Model;
 import com.study.xuan.vrshow.util.IOUtils;
+import com.study.xuan.vrshow.util.STLUtils;
 import com.study.xuan.vrshow.util.Util;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,7 +19,7 @@ import java.util.List;
  * Package com.hc.opengl
  * Created by HuaChao on 2016/7/28.
  */
-public class STLReader {
+public class STLReader implements ISTLReader{
     private StlLoadListener stlLoadListener;
 
     List<Float> normalList;
@@ -37,11 +40,11 @@ public class STLReader {
         return parserBinStl(fis);
     }
 
-    public Model parserBinStlInAssets(Context context, String fileName) 
+    public Model parserBinStlInAssets(Context context, String fileName)
                             throws IOException {
 
         InputStream is = context.getAssets().open(fileName);
-        if (isText(Util.toByteArray(is))) {
+        if (STLUtils.isAscii(Util.toByteArray(is))) {
             return parserAsciiStl(is);
         }
         return parserBinStl(is);
@@ -50,91 +53,6 @@ public class STLReader {
     public Model parserAsciiStlAssets(Context context, String fileName) throws IOException {
         InputStream is = context.getAssets().open(fileName);
         return parserAsciiStl(is);
-    }
-
-    private Model parserAsciiStl(InputStream is) throws IOException {
-        byte[] bytes = IOUtils.toByteArray(is);
-        Model model = new Model();
-        String stlText = new String(bytes);
-        List<Float> vertexList = new ArrayList<Float>();
-        //normalList.clear();
-
-        String[] stlLines = stlText.split("\n");
-        vertext_size = (stlLines.length - 2) / 7;
-        vertex_array = new float[vertext_size * 9];
-        normal_array = new float[vertext_size * 9];
-        //progressDialog.setMax(stlLines.length);
-
-        int normal_num = 0;
-        int vertex_num = 0;
-        for (int i = 0; i < stlLines.length; i++) {
-            String string = stlLines[i].trim();
-            if (string.startsWith("facet normal ")) {
-                string = string.replaceFirst("facet normal ", "");
-                String[] normalValue = string.split(" ");
-                for (int n = 0; n < 3; n++) {
-                    normal_array[normal_num++] = Float.parseFloat(normalValue[0]);
-                    normal_array[normal_num++] = Float.parseFloat(normalValue[1]);
-                    normal_array[normal_num++] = Float.parseFloat(normalValue[2]);
-                }
-            }
-            if (string.startsWith("vertex ")) {
-                string = string.replaceFirst("vertex ", "");
-                String[] vertexValue = string.split(" ");
-                float x = Float.parseFloat(vertexValue[0]);
-                float y = Float.parseFloat(vertexValue[1]);
-                float z = Float.parseFloat(vertexValue[2]);
-                adjustMaxMin(x, y, z);
-                vertex_array[vertex_num++] = x;
-                vertex_array[vertex_num++] = y;
-                vertex_array[vertex_num++] = z;
-            }
-
-            /*if (i % (stlLines.length / 50) == 0) {
-                //publishProgress(i);
-            }*/
-        }
-        //将读取的数据设置到Model对象中
-        model.setMax(maxX, maxY, maxZ);
-        model.setMin(minX, minY, minZ);
-        model.setFacetCount(vertext_size);
-        model.setVerts(vertex_array);
-        model.setVnorms(normal_array);
-        return model;
-    }
-
-    //解析二进制的Stl文件
-    public Model parserBinStl(InputStream in) throws IOException {
-        if (stlLoadListener != null)
-            stlLoadListener.onstart();
-        Model model = new Model();
-        //前面80字节是文件头，用于存贮文件名；
-        in.skip(80);
-
-        //紧接着用 4 个字节的整数来描述模型的三角面片个数
-        byte[] bytes = new byte[4];
-        in.read(bytes);// 读取三角面片个数
-        int facetCount = Util.byte4ToInt(bytes, 0);
-        model.setFacetCount(facetCount);
-        if (facetCount == 0) {
-            in.close();
-            return model;
-        }
-
-        // 每个三角面片占用固定的50个字节
-        byte[] facetBytes = new byte[50 * facetCount];
-        // 将所有的三角面片读取到字节数组
-        in.read(facetBytes);
-        //数据读取完毕后，可以把输入流关闭
-        in.close();
-
-
-        parseModel(model, facetBytes);
-
-
-        if (stlLoadListener != null)
-            stlLoadListener.onFinished();
-        return model;
     }
 
     /**
@@ -240,18 +158,141 @@ public class STLReader {
         }
     }
 
-    boolean isText(byte[] bytes) {
-        for (byte b : bytes) {
-            if (b == 0x0a || b == 0x0d || b == 0x09) {
-                // white spaces
-                continue;
+    /**
+     * 解析二进制格式的STL文件
+     */
+    @Override
+    public Model parserBinStl(byte[] source) {
+        InputStream in = new ByteArrayInputStream(source);
+        if (stlLoadListener != null)
+            stlLoadListener.onstart();
+        Model model = new Model();
+        try {
+            //前面80字节是文件头，用于存贮文件名；
+            in.skip(80);
+
+            //紧接着用 4 个字节的整数来描述模型的三角面片个数
+            byte[] bytes = new byte[4];
+            in.read(bytes);// 读取三角面片个数
+            int facetCount = Util.byte4ToInt(bytes, 0);
+            model.setFacetCount(facetCount);
+            if (facetCount == 0) {
+                in.close();
+                return model;
             }
-            if (b < 0x20 || (0xff & b) >= 0x80) {
-                // control codes
-                return false;
-            }
+
+            // 每个三角面片占用固定的50个字节
+            byte[] facetBytes = new byte[50 * facetCount];
+            // 将所有的三角面片读取到字节数组
+            in.read(facetBytes);
+            //数据读取完毕后，可以把输入流关闭
+            in.close();
+
+
+            parseModel(model, facetBytes);
+
+
+            if (stlLoadListener != null)
+                stlLoadListener.onFinished();
+        } catch (IOException e) {
         }
-        return true;
+        return model;
+    }
+
+    @Override
+    public Model parserBinStl(InputStream in) {
+        if (stlLoadListener != null)
+            stlLoadListener.onstart();
+        Model model = new Model();
+        try {
+            //前面80字节是文件头，用于存贮文件名；
+            in.skip(80);
+
+            //紧接着用 4 个字节的整数来描述模型的三角面片个数
+            byte[] bytes = new byte[4];
+            in.read(bytes);// 读取三角面片个数
+            int facetCount = Util.byte4ToInt(bytes, 0);
+            model.setFacetCount(facetCount);
+            if (facetCount == 0) {
+                in.close();
+                return model;
+            }
+
+            // 每个三角面片占用固定的50个字节
+            byte[] facetBytes = new byte[50 * facetCount];
+            // 将所有的三角面片读取到字节数组
+            in.read(facetBytes);
+            //数据读取完毕后，可以把输入流关闭
+            in.close();
+
+
+            parseModel(model, facetBytes);
+
+
+            if (stlLoadListener != null)
+                stlLoadListener.onFinished();
+        } catch (IOException e) {
+        }
+        return model;
+    }
+
+    /**
+     * 解析ASCII格式的STL文件
+     */
+    @Override
+    public Model parserAsciiStl(byte[] bytes) {
+        Model model = new Model();
+        String stlText = new String(bytes);
+        List<Float> vertexList = new ArrayList<Float>();
+        //normalList.clear();
+
+        String[] stlLines = stlText.split("\n");
+        vertext_size = (stlLines.length - 2) / 7;
+        vertex_array = new float[vertext_size * 9];
+        normal_array = new float[vertext_size * 9];
+        //progressDialog.setMax(stlLines.length);
+
+        int normal_num = 0;
+        int vertex_num = 0;
+        for (int i = 0; i < stlLines.length; i++) {
+            String string = stlLines[i].trim();
+            if (string.startsWith("facet normal ")) {
+                string = string.replaceFirst("facet normal ", "");
+                String[] normalValue = string.split(" ");
+                for (int n = 0; n < 3; n++) {
+                    normal_array[normal_num++] = Float.parseFloat(normalValue[0]);
+                    normal_array[normal_num++] = Float.parseFloat(normalValue[1]);
+                    normal_array[normal_num++] = Float.parseFloat(normalValue[2]);
+                }
+            }
+            if (string.startsWith("vertex ")) {
+                string = string.replaceFirst("vertex ", "");
+                String[] vertexValue = string.split(" ");
+                float x = Float.parseFloat(vertexValue[0]);
+                float y = Float.parseFloat(vertexValue[1]);
+                float z = Float.parseFloat(vertexValue[2]);
+                adjustMaxMin(x, y, z);
+                vertex_array[vertex_num++] = x;
+                vertex_array[vertex_num++] = y;
+                vertex_array[vertex_num++] = z;
+            }
+
+            /*if (i % (stlLines.length / 50) == 0) {
+                //publishProgress(i);
+            }*/
+        }
+        //将读取的数据设置到Model对象中
+        model.setMax(maxX, maxY, maxZ);
+        model.setMin(minX, minY, minZ);
+        model.setFacetCount(vertext_size);
+        model.setVerts(vertex_array);
+        model.setVnorms(normal_array);
+        return model;
+    }
+
+    @Override
+    public Model parserAsciiStl(InputStream in) {
+        return null;
     }
 
     public static interface StlLoadListener {

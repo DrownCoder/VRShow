@@ -24,12 +24,12 @@ public class Model {
     //每个顶点对应的法向量转换而来的Buffer
     private FloatBuffer vnormBuffer;
     //以下分别保存所有点在x,y,z方向上的最大值、最小值
-    float maxX;
-    float minX;
-    float maxY;
-    float minY;
-    float maxZ;
-    float minZ;
+    public float maxX;
+    public float minX;
+    public float maxY;
+    public float minY;
+    public float maxZ;
+    public float minZ;
 
     //返回模型的中心点
     public Point getCentrePoint() {

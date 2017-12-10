@@ -8,7 +8,7 @@ import android.util.Log;
 import com.study.xuan.vrshow.model.Model;
 import com.study.xuan.vrshow.model.Point;
 import com.study.xuan.vrshow.model.RotateModel;
-import com.study.xuan.vrshow.model.STLReader;
+import com.study.xuan.vrshow.operate.STLReader;
 
 import java.io.IOException;
 
