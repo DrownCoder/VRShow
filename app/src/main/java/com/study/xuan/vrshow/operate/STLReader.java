@@ -295,7 +295,7 @@ public class STLReader implements ISTLReader{
         return null;
     }
 
-    public static interface StlLoadListener {
+    public interface StlLoadListener {
         void onstart();
 
         void onLoading(int cur, int total);
