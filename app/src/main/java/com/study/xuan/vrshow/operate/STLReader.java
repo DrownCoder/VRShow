@@ -1,9 +1,10 @@
 package com.study.xuan.vrshow.operate;
 
 import android.content.Context;
+import android.util.Log;
 
+import com.study.xuan.vrshow.callback.onReadListener;
 import com.study.xuan.vrshow.model.Model;
-import com.study.xuan.vrshow.util.IOUtils;
 import com.study.xuan.vrshow.util.STLUtils;
 import com.study.xuan.vrshow.util.Util;
 
@@ -20,8 +21,7 @@ import java.util.List;
  * Created by HuaChao on 2016/7/28.
  */
 public class STLReader implements ISTLReader{
-    private StlLoadListener stlLoadListener;
-
+    private onReadListener listener;
     List<Float> normalList;
     public float maxX;
     public float maxY;
@@ -80,8 +80,8 @@ public class STLReader implements ISTLReader{
         int stlOffset = 0;
         try {
             for (int i = 0; i < facetCount; i++) {
-                if (stlLoadListener != null) {
-                    stlLoadListener.onLoading(i, facetCount);
+                if (listener != null) {
+                    listener.onLoading(i, facetCount);
                 }
                 for (int j = 0; j < 4; j++) {
                     float x = Util.byte4ToFloat(facetBytes, stlOffset);
@@ -124,8 +124,8 @@ public class STLReader implements ISTLReader{
                 remarks[i] = r;
             }
         } catch (Exception e) {
-            if (stlLoadListener != null) {
-                stlLoadListener.onFailure(e);
+            if (listener != null) {
+                listener.onFailure(e);
             } else {
                 e.printStackTrace();
             }
@@ -164,8 +164,8 @@ public class STLReader implements ISTLReader{
     @Override
     public Model parserBinStl(byte[] source) {
         InputStream in = new ByteArrayInputStream(source);
-        if (stlLoadListener != null)
-            stlLoadListener.onstart();
+        if (listener != null)
+            listener.onstart();
         Model model = new Model();
         try {
             //前面80字节是文件头，用于存贮文件名；
@@ -192,8 +192,6 @@ public class STLReader implements ISTLReader{
             parseModel(model, facetBytes);
 
 
-            if (stlLoadListener != null)
-                stlLoadListener.onFinished();
         } catch (IOException e) {
         }
         return model;
@@ -201,8 +199,6 @@ public class STLReader implements ISTLReader{
 
     @Override
     public Model parserBinStl(InputStream in) {
-        if (stlLoadListener != null)
-            stlLoadListener.onstart();
         Model model = new Model();
         try {
             //前面80字节是文件头，用于存贮文件名；
@@ -229,8 +225,6 @@ public class STLReader implements ISTLReader{
             parseModel(model, facetBytes);
 
 
-            if (stlLoadListener != null)
-                stlLoadListener.onFinished();
         } catch (IOException e) {
         }
         return model;
@@ -241,6 +235,7 @@ public class STLReader implements ISTLReader{
      */
     @Override
     public Model parserAsciiStl(byte[] bytes) {
+        int max = 0;
         Model model = new Model();
         String stlText = new String(bytes);
         List<Float> vertexList = new ArrayList<Float>();
@@ -251,6 +246,7 @@ public class STLReader implements ISTLReader{
         vertex_array = new float[vertext_size * 9];
         normal_array = new float[vertext_size * 9];
         //progressDialog.setMax(stlLines.length);
+        max = stlLines.length;
 
         int normal_num = 0;
         int vertex_num = 0;
@@ -277,11 +273,21 @@ public class STLReader implements ISTLReader{
                 vertex_array[vertex_num++] = z;
             }
 
-            /*if (i % (stlLines.length / 50) == 0) {
-                //publishProgress(i);
-            }*/
+            if (i % (stlLines.length / 50) == 0) {
+                listener.onLoading(i, max);
+            }
         }
         //将读取的数据设置到Model对象中
+        //=================矫正中心店坐标========================
+        float center_x=(maxX+minX)/2;
+        float center_y=(maxY+minY)/2;
+        float center_z=(maxZ+minZ)/2;
+
+        for(int i=0;i<vertext_size*3;i++){
+            adjust_coordinate(vertex_array,i*3,center_x);
+            adjust_coordinate(vertex_array,i*3+1,center_y);
+            adjust_coordinate(vertex_array,i*3+2,center_z);
+        }
         model.setMax(maxX, maxY, maxZ);
         model.setMin(minX, minY, minZ);
         model.setFacetCount(vertext_size);
@@ -289,19 +295,23 @@ public class STLReader implements ISTLReader{
         model.setVnorms(normal_array);
         return model;
     }
+    /**
+     * 矫正坐标  坐标圆心移动
+     * @param
+     * @param postion
+     */
+    private void adjust_coordinate(float[] vertex_array , int postion,float adjust){
+        vertex_array[postion]-=adjust;
+    }
 
     @Override
     public Model parserAsciiStl(InputStream in) {
         return null;
     }
 
-    public interface StlLoadListener {
-        void onstart();
-
-        void onLoading(int cur, int total);
-
-        void onFinished();
-
-        void onFailure(Exception e);
+    @Override
+    public void setCallBack(onReadListener listener) {
+        this.listener = listener;
     }
+
 }

@@ -1,8 +1,12 @@
 package com.study.xuan.vrshow.model;
 
+import android.util.Log;
+
 import com.study.xuan.vrshow.util.Util;
 
 import java.nio.FloatBuffer;
+
+import javax.microedition.khronos.opengles.GL10;
 
 /**
  * Package com.hc.opengl
@@ -30,6 +34,29 @@ public class Model {
     public float minY;
     public float maxZ;
     public float minZ;
+
+    public void draw(GL10 gl) {
+        if (vertBuffer == null) {
+            return;
+        }
+
+        gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+        gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
+        //gl.glFrontFace(GL10.GL_CCW);
+        gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertBuffer);
+        Log.i("TAG1", vertBuffer.toString());
+        gl.glNormalPointer(GL10.GL_FLOAT, 0, vnormBuffer);
+        Log.i("TAG2", vnormBuffer.toString());
+        gl.glDrawArrays(GL10.GL_TRIANGLES, 0, facetCount * 3);
+        gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+        gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
+
+
+    }
+
+    public void delete() {
+        verts = null;
+    }
 
     //返回模型的中心点
     public Point getCentrePoint() {

@@ -1,5 +1,6 @@
 package com.study.xuan.vrshow.operate;
 
+import com.study.xuan.vrshow.callback.onReadListener;
 import com.study.xuan.vrshow.model.Model;
 
 import java.io.InputStream;
@@ -18,4 +19,6 @@ public interface ISTLReader {
     public Model parserAsciiStl(byte[] bytes);
 
     public Model parserAsciiStl(InputStream in);
+
+    public void setCallBack(onReadListener listener);
 }
