@@ -1,7 +1,9 @@
 package com.study.xuan.vrshow;
 
 import android.app.ActivityManager;
+import android.content.Context;
 import android.content.pm.ConfigurationInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,20 +14,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.study.xuan.vrshow.callback.onReadListener;
-import com.study.xuan.vrshow.model.Model;
+import com.study.xuan.vrshow.model.STLModel;
+import com.study.xuan.vrshow.operate.ReaderBuilder;
 import com.study.xuan.vrshow.operate.STLReader;
 import com.study.xuan.vrshow.util.IOUtils;
-import com.study.xuan.vrshow.widget.STLRenderer;
-import com.study.xuan.vrshow.widget.STLRenderer2;
-import com.study.xuan.vrshow.widget.STLSurfaceView;
 import com.study.xuan.vrshow.widget.STLView;
 
 import java.io.IOException;
+import java.io.InputStream;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
     private boolean supportsEs2;
-    private STLSurfaceView stlView;
-    private STLRenderer stlRenderer;
+    private STLView stlView;
     private FrameLayout container;
     private TextView mTvProgress;
     private Bundle bundle = new Bundle();
@@ -48,9 +48,10 @@ public class MainActivity extends AppCompatActivity {
             setContentView(R.layout.activity_main);
             container = (FrameLayout) findViewById(R.id.container);
             mTvProgress = (TextView) findViewById(R.id.progress);
-            STLSurfaceView.ReaderBuilder builder = new STLSurfaceView.ReaderBuilder();
+
+            ReaderBuilder builder = new ReaderBuilder();
             try {
-                builder.Byte(IOUtils.toByteArray(getAssets().open("BelleBook_Big.stl")))
+                builder.Byte(IOUtils.toByteArray(getAssets().open("bai.stl")))
                         .Reader(new STLReader()).CallBack(readListener).build();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -60,6 +61,19 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "当前设备不支持OpenGL ES 2.0!", Toast.LENGTH_SHORT).show();
         }
 
+    }
+
+    private byte[] getSTLBytes(Context context, Uri uri) {
+        byte[] stlBytes = null;
+        InputStream inputStream = null;
+        try {
+            inputStream = context.getContentResolver().openInputStream(uri);
+            stlBytes = IOUtils.toByteArray(inputStream);
+        } catch (IOException e) {
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
+        return stlBytes;
     }
 
     private onReadListener readListener = new onReadListener() {
@@ -78,19 +92,19 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onFinished(Model model) {
+        public void onFinished(STLModel model) {
             mTvProgress.setText("解析完成！");
             if (model != null) {
                 if (stlView == null) {
                     //stlView = new STLSurfaceView(MainActivity.this);
                     //stlRenderer = new STLRenderer(model);
-                    STLView stlView = new STLView(MainActivity.this,model);
-                    STLRenderer2 renderer2 = new STLRenderer2(model);
+                    stlView = new STLView(MainActivity.this,model);
+                    //STLRenderer2 renderer2 = new STLRenderer2(model);
                     //stlView.setRenderer(renderer2);
-                    renderer2.requestRedraw();
+                    //renderer2.requestRedraw();
                     container.addView(stlView);
                 } else {
-                    stlView.setNewModel(model);
+                    stlView.setNewSTLObject(model);
                 }
             }
         }
@@ -124,5 +138,4 @@ public class MainActivity extends AppCompatActivity {
             stlView.onPause();
         }
     }
-
 }

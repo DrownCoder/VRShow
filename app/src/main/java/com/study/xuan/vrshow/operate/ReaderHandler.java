@@ -1,16 +1,10 @@
 package com.study.xuan.vrshow.operate;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.study.xuan.vrshow.callback.onReadListener;
-import com.study.xuan.vrshow.model.Model;
-import com.study.xuan.vrshow.util.IOUtils;
+import com.study.xuan.vrshow.model.STLModel;
 import com.study.xuan.vrshow.util.STLUtils;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 
 /**
  * Author : xuan.
@@ -36,15 +30,15 @@ public class ReaderHandler {
         }
     }
 
-    private class ReaderTask extends AsyncTask<byte[], Integer,Model>{
+    private class ReaderTask extends AsyncTask<byte[], Integer,STLModel>{
         @Override
         protected void onPreExecute() {
             listener.onstart();
         }
 
         @Override
-        protected Model doInBackground(byte[]... bytes) {
-            Model model;
+        protected STLModel doInBackground(byte[]... bytes) {
+            STLModel model;
             if (STLUtils.isAscii(bytes[0])) {
                 //parser ascii code
                 model = reader.parserAsciiStl(bytes[0]);
@@ -56,7 +50,7 @@ public class ReaderHandler {
         }
 
         @Override
-        protected void onPostExecute(Model model) {
+        protected void onPostExecute(STLModel model) {
             listener.onFinished(model);
         }
     }

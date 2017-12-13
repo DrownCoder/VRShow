@@ -1,10 +1,5 @@
 package com.study.xuan.vrshow.widget;
 
-import android.opengl.GLSurfaceView;
-import android.opengl.GLU;
-
-import com.study.xuan.vrshow.model.Model;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -14,14 +9,17 @@ import java.util.List;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-/**
- * Author : xuan.
- * Date : 2017/12/12.
- * Description :input the description of this file.
- */
+import android.opengl.GLSurfaceView.Renderer;
+import android.opengl.GLU;
 
-public class STLRenderer implements GLSurfaceView.Renderer {
-    private Model model;
+import com.study.xuan.vrshow.model.STLModel;
+
+/**
+ * 自定义渲染器
+ * @author zhaowencong
+ *
+ */
+public class STLRenderer implements Renderer {
     public static final int FRAME_BUFFER_COUNT = 5;
     public float angleX;
     public float angleY;
@@ -31,8 +29,8 @@ public class STLRenderer implements GLSurfaceView.Renderer {
     public float scale = 1.0f;
     //当前展示
     private float scale_rember=1.0f;
-    //标准缩放
-    private float standardScale =1.0f;
+    //当前固定
+    private float scale_now=1.0f;
     public float translation_z;
 
     public static float red;
@@ -43,64 +41,33 @@ public class STLRenderer implements GLSurfaceView.Renderer {
     public static boolean displayGrids = false;
     private static int bufferCounter = FRAME_BUFFER_COUNT;
 
-    public STLRenderer(Model model) {
-        this.model = model;
+    private STLModel stlObject;
+
+    public STLRenderer(STLModel stlObject) {
+        this.stlObject = stlObject;
         setTransLation_Z();
     }
-
-    public void setScale(float scale) {
-        this.scale = scale;
+    /**
+     * 简单重绘（适用于旋转等）
+     */
+    public void requestRedraw() {
+        bufferCounter = FRAME_BUFFER_COUNT;
     }
 
-    @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        gl.glEnable(GL10.GL_BLEND);
-//		 gl.glEnable(GL10.GL_TEXTURE_2D);     
-//		 gl.glBlendFunc(GL10.GL_ONE, GL10.GL_SRC_COLOR);
-        // FIXME This line seems not to be needed?
-        gl.glClearDepthf(1.0f);
-        gl.glEnable(GL10.GL_DEPTH_TEST);
-        gl.glDepthFunc(GL10.GL_LEQUAL);
-        gl.glHint(3152, 4354);
-        gl.glEnable(GL10.GL_NORMALIZE);
-        gl.glShadeModel(GL10.GL_SMOOTH);
+    /**
+     * 复杂重绘 （适用于更换文件）
+     * @param stlObject
+     */
+    public void requestRedraw(STLModel stlObject) {
 
-        gl.glMatrixMode(GL10.GL_PROJECTION);
-
-        // Lighting
-        gl.glEnable(GL10.GL_LIGHTING);
-        gl.glLightModelfv(GL10.GL_LIGHT_MODEL_AMBIENT, getFloatBufferFromArray(new  float[]{0.5f,0.5f,0.5f,1.0f}));// 全局环境光
-        gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_AMBIENT_AND_DIFFUSE, new float[]{0.3f, 0.3f, 0.3f, 1.0f}, 0);
-        gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_POSITION, new float[] { 0f, 0f, 1000f, 1.0f }, 0);
-        gl.glEnable(GL10.GL_LIGHT0);
-    }
-
-    @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
-        float aspectRatio = (float) width / height;
-
-        gl.glViewport(0, 0, width, height);
-
-        gl.glLoadIdentity();
-        gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
-
-        if (model != null) {
-            /*Log.i("maxX:" + model.maxX);
-            Log.i("minX:" + model.minX);
-            Log.i("maxY:" + model.maxY);
-            Log.i("minY:" + model.minY);
-            Log.i("maxZ:" + model.maxZ);
-            Log.i("minZ:" + model.minZ);*/
-        }
-
-        GLU.gluPerspective(gl, 45f, aspectRatio, 1f, 5000f);// (model.maxZ - model.minZ) * 10f + 100f);
-
-        gl.glMatrixMode(GL10.GL_MODELVIEW);
-        GLU.gluLookAt(gl, 0, 0, 100f, 0, 0, 0, 0, 1f, 0);
+        this.stlObject = stlObject;
+        setTransLation_Z();
+        bufferCounter = FRAME_BUFFER_COUNT;
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
+        android.util.Log.i("TAG", "onDrawFrame");
         if (bufferCounter < 1) {
             return;
         }
@@ -113,9 +80,10 @@ public class STLRenderer implements GLSurfaceView.Renderer {
 
         // rotation and apply Z-axis
         gl.glTranslatef(0, 0, translation_z);
+        android.util.Log.i("trans", translation_z + "");
         gl.glRotatef(angleX, 0, 1, 0);
         gl.glRotatef(angleY, 1, 0, 0);
-        scale_rember= standardScale *scale;
+        scale_rember=scale_now*scale;
         gl.glScalef(scale_rember, scale_rember, scale_rember);
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
 
@@ -149,7 +117,7 @@ public class STLRenderer implements GLSurfaceView.Renderer {
         }
 
         // draw object
-        if (model != null) {
+        if (stlObject != null) {
             // FIXME transparency applying does not correctly
             gl.glMaterialfv(GL10.GL_FRONT, GL10.GL_AMBIENT, new float[] { 0.75f,0.75f,0.75f,1.0f }, 0);
 
@@ -158,29 +126,10 @@ public class STLRenderer implements GLSurfaceView.Renderer {
             gl.glEnable(GL10.GL_COLOR_MATERIAL);
             gl.glPushMatrix();
             gl.glColor4f(red,green,blue, 1.0f);
-            draw(gl);
+            stlObject.draw(gl);
             gl.glPopMatrix();
             gl.glDisable(GL10.GL_COLOR_MATERIAL);
         }
-    }
-
-    private void draw(GL10 gl) {
-        if (model == null) {
-            return;
-        }else{
-            if (model.getVnormBuffer() == null || model.getVnormBuffer() == null) {
-                return;
-            }
-        }
-
-        gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-        gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
-        //gl.glFrontFace(GL10.GL_CCW);
-        gl.glVertexPointer(3, GL10.GL_FLOAT, 0, model.getVertBuffer());
-        gl.glNormalPointer(GL10.GL_FLOAT,0, model.getVnormBuffer());
-        gl.glDrawArrays(GL10.GL_TRIANGLES, 0, model.getFacetCount()*3);
-        gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
-        gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
     }
 
     private FloatBuffer getFloatBufferFromArray(float[] vertexArray) {
@@ -205,10 +154,59 @@ public class STLRenderer implements GLSurfaceView.Renderer {
         return triangleBuffer;
     }
 
-    public float getStandardScale() {
-        return standardScale;
+    @Override
+    public void onSurfaceChanged(GL10 gl, int width, int height) {
+        android.util.Log.i("TAG", "onSurfaceChanged");
+        float aspectRatio = (float) width / height;
+
+        gl.glViewport(0, 0, width, height);
+
+        gl.glLoadIdentity();
+        gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+
+        if (stlObject != null) {
+            android.util.Log.i("TAG","maxX:" + stlObject.maxX);
+            android.util.Log.i("TAG","minX:" + stlObject.minX);
+            android.util.Log.i("TAG","maxY:" + stlObject.maxY);
+            android.util.Log.i("TAG","minY:" + stlObject.minY);
+            android.util.Log.i("TAG","maxZ:" + stlObject.maxZ);
+            android.util.Log.i("TAG","minZ:" + stlObject.minZ);
+        }
+
+        GLU.gluPerspective(gl, 45f, aspectRatio, 1f, 5000f);// (stlObject.maxZ - stlObject.minZ) * 10f + 100f);
+
+        gl.glMatrixMode(GL10.GL_MODELVIEW);
+        GLU.gluLookAt(gl, 0, 0, 100f, 0, 0, 0, 0, 1f, 0);
     }
 
+    @Override
+    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        android.util.Log.i("TAG", "onSurfaceCreated");
+//		gl.glClearColor(0f, 0f, 0f, 0.5f);
+
+
+        //gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+        gl.glEnable(GL10.GL_BLEND);
+//		 gl.glEnable(GL10.GL_TEXTURE_2D);
+//		 gl.glBlendFunc(GL10.GL_ONE, GL10.GL_SRC_COLOR);
+        // FIXME This line seems not to be needed?
+        gl.glClearDepthf(1.0f);
+        gl.glEnable(GL10.GL_DEPTH_TEST);
+        gl.glDepthFunc(GL10.GL_LEQUAL);
+        gl.glHint(3152, 4354);
+        gl.glEnable(GL10.GL_NORMALIZE);
+        gl.glShadeModel(GL10.GL_SMOOTH);
+
+        gl.glMatrixMode(GL10.GL_PROJECTION);
+
+        // Lighting
+        gl.glEnable(GL10.GL_LIGHTING);
+        gl.glLightModelfv(GL10.GL_LIGHT_MODEL_AMBIENT, getFloatBufferFromArray(new  float[]{0.5f,0.5f,0.5f,1.0f}));// 全局环境光
+        gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_AMBIENT_AND_DIFFUSE, new float[]{0.3f, 0.3f, 0.3f, 1.0f}, 0);
+        gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_POSITION, new float[] { 0f, 0f, 1000f, 1.0f }, 0);
+        gl.glEnable(GL10.GL_LIGHT0);
+
+    }
     /**
      * 画网格
      * @param gl
@@ -269,38 +267,21 @@ public class STLRenderer implements GLSurfaceView.Renderer {
     }
 
     /**
-     * 简单重绘（适用于旋转等）
-     */
-    public void requestRedraw() {
-        bufferCounter = FRAME_BUFFER_COUNT;
-    }
-
-    /**
-     * 复杂重绘 （适用于更换文件）
-     */
-    public void requestRedraw(Model model) {
-
-        this.model = model;
-        setTransLation_Z();
-        bufferCounter = FRAME_BUFFER_COUNT;
-    }
-
-    /**
      * 调整Z轴平移位置    （目的式为了模型展示大小适中）
      */
     private void setTransLation_Z (){
-        if (model != null) {
-           /* Log.i("zwcmaxX:" + model.maxX);
-            Log.i("zwcminX:" + model.minX);
-            Log.i("zwcmaxY:" + model.maxY);
-            Log.i("zwcminY:" + model.minY);
-            Log.i("zwcmaxZ:" + model.maxZ);
-            Log.i("zwcminZ:" + model.minZ);*/
+        if (stlObject != null) {
+            android.util.Log.i("TAG","zwcmaxX:" + stlObject.maxX);
+            android.util.Log.i("TAG","zwcminX:" + stlObject.minX);
+            android.util.Log.i("TAG","zwcmaxY:" + stlObject.maxY);
+            android.util.Log.i("TAG","zwcminY:" + stlObject.minY);
+            android.util.Log.i("TAG","zwcmaxZ:" + stlObject.maxZ);
+            android.util.Log.i("TAG","zwcminZ:" + stlObject.minZ);
         }
         //算x、y轴差值
-        float distance_x = model.maxX - model.minX;
-        float distance_y = model.maxY - model.minY;
-        float distance_z = model.maxZ - model.minZ;
+        float distance_x = stlObject.maxX - stlObject.minX;
+        float distance_y = stlObject.maxY - stlObject.minY;
+        float distance_z = stlObject.maxZ - stlObject.minZ;
         translation_z = distance_x;
         if (translation_z < distance_y) {
             translation_z = distance_y;
@@ -309,5 +290,17 @@ public class STLRenderer implements GLSurfaceView.Renderer {
             translation_z = distance_z;
         }
         translation_z *= -2;
+    }
+    public void delete(){
+        stlObject.delete();
+        stlObject=null;
+    }
+    /**
+     * 固定缩放比例
+     */
+    public void setsclae(){
+        scale_now=scale_rember;
+        scale_rember=1.0f;
+        scale=1.0f;
     }
 }

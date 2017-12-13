@@ -1,5 +1,8 @@
 package com.study.xuan.vrshow.widget;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -8,21 +11,18 @@ import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.view.MotionEvent;
 
-
-import com.study.xuan.vrshow.model.Model;
+import com.study.xuan.vrshow.model.STLModel;
 import com.study.xuan.vrshow.util.IOUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
 
 public class STLView extends GLSurfaceView {
 
-	private STLRenderer2 stlRenderer;
+	private STLRenderer stlRenderer;
 	private Uri uri;
 	//控制缩放速度的
 	static int CONTROL=10;
 
-	public STLView(Context context, Model stlObject) {
+	public STLView(Context context, STLModel stlObject) {
 		super(context);
 
 
@@ -33,7 +33,7 @@ public class STLView extends GLSurfaceView {
 		STLRenderer.alpha = colorConfig.getFloat("alpha", 0.5f);
 
 		// render: stlObject as null
-		stlRenderer = new STLRenderer2(stlObject);
+		stlRenderer = new STLRenderer(stlObject);
 		setRenderer(stlRenderer);
 		stlRenderer.requestRedraw();
 	}
@@ -55,13 +55,12 @@ public class STLView extends GLSurfaceView {
 		return stlBytes;
 	}
 
-	//这里将偏移数值降低  
+	//这里将偏移数值降低
 	private final float TOUCH_SCALE_FACTOR = 180.0f / 320/2;
 	private float previousX;
 	private float previousY;
 
 	private void changeDistance(float scale) {
-		//Log.i("scale" + scale);
 		stlRenderer.scale = scale;
 	}
 
@@ -106,12 +105,12 @@ public class STLView extends GLSurfaceView {
 					}
 				}
 				break;
-			
+
 			case MotionEvent.ACTION_MOVE:
 				if (touchMode == TOUCH_ZOOM && pinchStartDistance > 0) {
 					// on pinch
 					PointF pt = new PointF();
-					
+
 					getPinchCenterPoint(event, pt);
 					pinchMoveX = pt.x - previousX;
 					pinchMoveY = pt.y - previousY;
@@ -119,7 +118,7 @@ public class STLView extends GLSurfaceView {
 					float dy = pinchMoveY;
 					previousX = pt.x;
 					previousY = pt.y;
-					
+
 					if (isRotate) {
 						stlRenderer.angleX += dx * TOUCH_SCALE_FACTOR;
 						stlRenderer.angleY += dy * TOUCH_SCALE_FACTOR;
@@ -128,14 +127,14 @@ public class STLView extends GLSurfaceView {
 						stlRenderer.positionX += dx * TOUCH_SCALE_FACTOR / 5;
 						stlRenderer.positionY += dy * TOUCH_SCALE_FACTOR / 5;
 					}
-					
+
 					pinchScale = getPinchDistance(event) / pinchStartDistance;
 					changeDistance( pinchScale );
 					stlRenderer.requestRedraw();
 					invalidate();
 				}
 				break;
-			
+
 			// end pinch
 			case MotionEvent.ACTION_UP:
 			case MotionEvent.ACTION_POINTER_UP:
@@ -143,7 +142,7 @@ public class STLView extends GLSurfaceView {
 				pinchStartZ=0;
 				if (touchMode == TOUCH_ZOOM) {
 					touchMode = TOUCH_NONE;
-					
+
 					pinchMoveX = 0.0f;
 					pinchMoveY = 0.0f;
 					pinchScale = 1.0f;
@@ -163,17 +162,17 @@ public class STLView extends GLSurfaceView {
 					previousY = event.getY();
 				}
 				break;
-			
+
 			case MotionEvent.ACTION_MOVE:
 				if (touchMode == TOUCH_DRAG) {
 					float x = event.getX();
 					float y = event.getY();
-					
+
 					float dx = x - previousX;
 					float dy = y - previousY;
 					previousX = x;
 					previousY = y;
-					
+
 					if (isRotate) {
 						stlRenderer.angleX += dx * TOUCH_SCALE_FACTOR;
 						stlRenderer.angleY += dy * TOUCH_SCALE_FACTOR;
@@ -186,7 +185,7 @@ public class STLView extends GLSurfaceView {
 					requestRender();
 				}
 				break;
-			
+
 			// end drag
 			case MotionEvent.ACTION_UP:
 				if (touchMode == TOUCH_DRAG) {
@@ -200,25 +199,25 @@ public class STLView extends GLSurfaceView {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param event
 	 * @return pinched distance
 	 */
 	private float getPinchDistance(MotionEvent event) {
 		float x=0;
 		float y=0;
-		  try {  
-			  x = event.getX(0) - event.getX(1);
-			  y = event.getY(0) - event.getY(1); 
-		    } catch (IllegalArgumentException e) {  
-		        // TODO Auto-generated catch block  
-		        e.printStackTrace();  
-		    } 
+		try {
+			x = event.getX(0) - event.getX(1);
+			y = event.getY(0) - event.getY(1);
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return (float) Math.sqrt(x * x + y * y);
 	}
 
 	/**
-	 * 
+	 *
 	 * @param event
 	 * @param pt pinched point
 	 */
@@ -234,7 +233,7 @@ public class STLView extends GLSurfaceView {
 	 * 更新object 刷新界面
 	 * @param stlObject
 	 */
-	public void setNewSTLObject(Model stlObject){
+	public void setNewSTLObject(STLModel stlObject){
 		stlRenderer.requestRedraw(stlObject);
 	}
 	/**
@@ -243,7 +242,7 @@ public class STLView extends GLSurfaceView {
 	public void requestRedraw(){
 		stlRenderer.requestRedraw();
 	}
-	
+
 	public void delete (){
 		stlRenderer.delete();
 	}
