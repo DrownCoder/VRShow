@@ -15,22 +15,28 @@ import android.opengl.GLU;
 import com.study.xuan.vrshow.model.STLModel;
 
 /**
- * 自定义渲染器
- * @author zhaowencong
- *
+ * Author : xuan.
+ * Date : 2017/12/14.
+ * Description : 渲染器
  */
+
+
 public class STLRenderer implements Renderer {
     public static final int FRAME_BUFFER_COUNT = 5;
     public float angleX;
     public float angleY;
     public float positionX = 0f;
     public float positionY = 0f;
+    //scale
     //外部控制
     public float scale = 1.0f;
     //当前展示
     private float scale_rember=1.0f;
     //当前固定
     private float scale_now=1.0f;
+    private boolean scaleRange;
+    private float SCALE_MAX;
+    private float SCALE_MIN;
     public float translation_z;
 
     public static float red;
@@ -65,14 +71,24 @@ public class STLRenderer implements Renderer {
         bufferCounter = FRAME_BUFFER_COUNT;
     }
 
+    public void checkScaleRange(boolean scaleRange) {
+        this.scaleRange = scaleRange;
+    }
+
+    public void setScaleRange(float max, float min) {
+        this.SCALE_MAX = max;
+        this.SCALE_MIN = min;
+    }
+
     @Override
     public void onDrawFrame(GL10 gl) {
-        android.util.Log.i("TAG", "onDrawFrame");
+        if (stlObject == null) {
+            return;
+        }
         if (bufferCounter < 1) {
             return;
         }
         bufferCounter--;
-        System.out.println("zwcdraw-----------------------------------");
         gl.glLoadIdentity();
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
 
@@ -80,17 +96,25 @@ public class STLRenderer implements Renderer {
 
         // rotation and apply Z-axis
         gl.glTranslatef(0, 0, translation_z);
-        android.util.Log.i("trans", translation_z + "");
         gl.glRotatef(angleX, 0, 1, 0);
         gl.glRotatef(angleY, 1, 0, 0);
         scale_rember=scale_now*scale;
+        if (scaleRange) {
+            if (scale_rember > SCALE_MAX) {
+                scale_rember = SCALE_MAX;
+            }
+            if (scale_rember < SCALE_MIN) {
+                scale_rember = SCALE_MIN;
+            }
+        }
         gl.glScalef(scale_rember, scale_rember, scale_rember);
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
 
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         // draw X-Y field
-        if (displayGrids) {
+        if (!displayGrids) {
             drawGrids(gl);
+            drawLines(gl);
         }
 
         // draw axis
@@ -156,22 +180,15 @@ public class STLRenderer implements Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        android.util.Log.i("TAG", "onSurfaceChanged");
+        if (stlObject == null) {
+            return;
+        }
         float aspectRatio = (float) width / height;
 
         gl.glViewport(0, 0, width, height);
 
         gl.glLoadIdentity();
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
-
-        if (stlObject != null) {
-            android.util.Log.i("TAG","maxX:" + stlObject.maxX);
-            android.util.Log.i("TAG","minX:" + stlObject.minX);
-            android.util.Log.i("TAG","maxY:" + stlObject.maxY);
-            android.util.Log.i("TAG","minY:" + stlObject.minY);
-            android.util.Log.i("TAG","maxZ:" + stlObject.maxZ);
-            android.util.Log.i("TAG","minZ:" + stlObject.minZ);
-        }
 
         GLU.gluPerspective(gl, 45f, aspectRatio, 1f, 5000f);// (stlObject.maxZ - stlObject.minZ) * 10f + 100f);
 
@@ -181,7 +198,9 @@ public class STLRenderer implements Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        android.util.Log.i("TAG", "onSurfaceCreated");
+        if (stlObject == null) {
+            return;
+        }
 //		gl.glClearColor(0f, 0f, 0f, 0.5f);
 
 
@@ -270,14 +289,6 @@ public class STLRenderer implements Renderer {
      * 调整Z轴平移位置    （目的式为了模型展示大小适中）
      */
     private void setTransLation_Z (){
-        if (stlObject != null) {
-            android.util.Log.i("TAG","zwcmaxX:" + stlObject.maxX);
-            android.util.Log.i("TAG","zwcminX:" + stlObject.minX);
-            android.util.Log.i("TAG","zwcmaxY:" + stlObject.maxY);
-            android.util.Log.i("TAG","zwcminY:" + stlObject.minY);
-            android.util.Log.i("TAG","zwcmaxZ:" + stlObject.maxZ);
-            android.util.Log.i("TAG","zwcminZ:" + stlObject.minZ);
-        }
         //算x、y轴差值
         float distance_x = stlObject.maxX - stlObject.minX;
         float distance_y = stlObject.maxY - stlObject.minY;

@@ -1,9 +1,7 @@
 package com.study.xuan.vrshow;
 
 import android.app.ActivityManager;
-import android.content.Context;
 import android.content.pm.ConfigurationInfo;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,15 +11,8 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.study.xuan.vrshow.callback.onReadListener;
-import com.study.xuan.vrshow.model.STLModel;
-import com.study.xuan.vrshow.operate.ReaderBuilder;
-import com.study.xuan.vrshow.operate.STLReader;
-import com.study.xuan.vrshow.util.IOUtils;
+import com.study.xuan.vrshow.callback.OnReadCallBack;
 import com.study.xuan.vrshow.widget.STLView;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity{
     private boolean supportsEs2;
@@ -47,15 +38,9 @@ public class MainActivity extends AppCompatActivity{
         if (supportsEs2) {
             setContentView(R.layout.activity_main);
             container = (FrameLayout) findViewById(R.id.container);
+            stlView = (STLView) findViewById(R.id.stlview);
             mTvProgress = (TextView) findViewById(R.id.progress);
-
-            ReaderBuilder builder = new ReaderBuilder();
-            try {
-                builder.Byte(IOUtils.toByteArray(getAssets().open("bai.stl")))
-                        .Reader(new STLReader()).CallBack(readListener).build();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            initEvent();
         } else {
             setContentView(R.layout.activity_main);
             Toast.makeText(this, "当前设备不支持OpenGL ES 2.0!", Toast.LENGTH_SHORT).show();
@@ -63,20 +48,33 @@ public class MainActivity extends AppCompatActivity{
 
     }
 
-    private byte[] getSTLBytes(Context context, Uri uri) {
-        byte[] stlBytes = null;
-        InputStream inputStream = null;
-        try {
-            inputStream = context.getContentResolver().openInputStream(uri);
-            stlBytes = IOUtils.toByteArray(inputStream);
-        } catch (IOException e) {
-        } finally {
-            IOUtils.closeQuietly(inputStream);
-        }
-        return stlBytes;
+    private void initEvent() {
+        stlView.setTouch(true);
+        stlView.setRotate(true);
+        stlView.setOnReadCallBack(new OnReadCallBack() {
+            @Override
+            public void onStart() {
+                mTvProgress.setText("开始解析！");
+            }
+
+            @Override
+            public void onReading(int cur, int total) {
+                bundle.putInt("cur", cur);
+                bundle.putInt("total", total);
+                Message msg = new Message();
+                msg.setData(bundle);
+                handler.sendMessage(msg);
+            }
+
+            @Override
+            public void onFinish() {
+                mTvProgress.setText("解析完成！");
+            }
+        });
     }
 
-    private onReadListener readListener = new onReadListener() {
+
+    /*private onReadListener readListener = new onReadListener() {
         @Override
         public void onstart() {
             mTvProgress.setText("开始解析！");
@@ -96,12 +94,7 @@ public class MainActivity extends AppCompatActivity{
             mTvProgress.setText("解析完成！");
             if (model != null) {
                 if (stlView == null) {
-                    //stlView = new STLSurfaceView(MainActivity.this);
-                    //stlRenderer = new STLRenderer(model);
                     stlView = new STLView(MainActivity.this,model);
-                    //STLRenderer2 renderer2 = new STLRenderer2(model);
-                    //stlView.setRenderer(renderer2);
-                    //renderer2.requestRedraw();
                     container.addView(stlView);
                 } else {
                     stlView.setNewSTLObject(model);
@@ -113,7 +106,7 @@ public class MainActivity extends AppCompatActivity{
         public void onFailure(Exception e) {
 
         }
-    };
+    };*/
 
 
     private void checkSupported() {

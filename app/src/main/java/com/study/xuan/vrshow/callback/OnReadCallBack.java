@@ -6,7 +6,7 @@ package com.study.xuan.vrshow.callback;
  * Description :input the description of this file.
  */
 
-public abstract class onCreateCallBack {
+public abstract class OnReadCallBack {
     public void onStart() {
 
     }

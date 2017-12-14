@@ -6,10 +6,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
+    <com.study.xuan.vrshow.widget.STLView
+        android:id="@+id/stlview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
     <TextView
         android:id="@+id/progress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:textColor="@color/colorAccent"
         />
 </FrameLayout>

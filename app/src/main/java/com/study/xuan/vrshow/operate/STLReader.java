@@ -14,18 +14,22 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
- * Package com.hc.opengl
- * Created by HuaChao on 2016/7/28.
+ * Author : xuan.
+ * Date : 2017/12/14.
+ * Description : STL文件解析器
  */
+
+
 public class STLReader implements ISTLReader{
     private onReadListener listener;
-    public float maxX;
-    public float maxY;
-    public float maxZ;
-    public float minX;
-    public float minY;
-    public float minZ;
+    public float maxX = Float.MIN_VALUE;
+    public float maxY = Float.MIN_VALUE;
+    public float maxZ = Float.MIN_VALUE;
+    public float minX = Float.MAX_VALUE;
+    public float minY = Float.MAX_VALUE;
+    public float minZ = Float.MAX_VALUE;
     //优化使用的数组
     private float[] normal_array = null;
     private float[] vertex_array = null;
@@ -106,6 +110,7 @@ public class STLReader implements ISTLReader{
             adjust_coordinate(vertex_array,i*3+1,center_y);
             adjust_coordinate(vertex_array,i*3+2,center_z);
         }
+
         model.setMax(maxX, maxY, maxZ);
         model.setMin(minX, minY, minZ);
         model.setSize(vertext_size);
@@ -143,45 +148,6 @@ public class STLReader implements ISTLReader{
             minZ = z;
         }
     }
-
-    /**
-     * 解析二进制格式的STL文件
-     */
-    /*@Override
-    public STLSTLModel parserBinStl(byte[] source) {
-        InputStream in = new ByteArrayInputStream(source);
-        if (listener != null)
-            listener.onstart();
-        STLSTLModel STLModel = new STLSTLModel();
-        try {
-            //前面80字节是文件头，用于存贮文件名；
-            in.skip(80);
-
-            //紧接着用 4 个字节的整数来描述模型的三角面片个数
-            byte[] bytes = new byte[4];
-            in.read(bytes);// 读取三角面片个数
-            int facetCount = Util.byte4ToInt(bytes, 0);
-            STLModel.setFacetCount(facetCount);
-            if (facetCount == 0) {
-                in.close();
-                return STLModel;
-            }
-
-            // 每个三角面片占用固定的50个字节
-            byte[] facetBytes = new byte[50 * facetCount];
-            // 将所有的三角面片读取到字节数组
-            in.read(facetBytes);
-            //数据读取完毕后，可以把输入流关闭
-            in.close();
-
-
-            parseSTLModel(STLModel, facetBytes);
-
-
-        } catch (IOException e) {
-        }
-        return STLModel;
-    }*/
 
     /**
      * 解析ASCII格式的STL文件
@@ -254,7 +220,7 @@ public class STLReader implements ISTLReader{
      * @param postion
      */
     private void adjust_coordinate(float[] vertex_array , int postion,float adjust){
-        vertex_array[postion]-=adjust;
+        this.vertex_array[postion]-=adjust;
     }
 
     @Override

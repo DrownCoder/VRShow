@@ -1,82 +1,47 @@
 package com.study.xuan.vrshow.widget;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.PointF;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
+import android.util.AttributeSet;
 import android.view.MotionEvent;
 
+import com.study.xuan.vrshow.callback.OnReadCallBack;
+import com.study.xuan.vrshow.callback.onReadListener;
 import com.study.xuan.vrshow.model.STLModel;
+import com.study.xuan.vrshow.operate.ReaderBuilder;
+import com.study.xuan.vrshow.operate.STLReader;
 import com.study.xuan.vrshow.util.IOUtils;
 
+/**
+ * Author : xuan.
+ * Date : 2017/12/10.
+ * Description : 自定义展示器
+ */
 
 public class STLView extends GLSurfaceView {
-
 	private STLRenderer stlRenderer;
 	private Uri uri;
+	private Context mContext;
+	private OnReadCallBack OnReadCallBack;
 	//控制缩放速度的
 	static int CONTROL=10;
-
-	public STLView(Context context, STLModel stlObject) {
-		super(context);
-
-
-		SharedPreferences colorConfig = context.getSharedPreferences("colors", Activity.MODE_PRIVATE);
-		STLRenderer.red = colorConfig.getFloat("red", 0.75f);
-		STLRenderer.green = colorConfig.getFloat("green", 0.75f);
-		STLRenderer.blue = colorConfig.getFloat("blue", 0.75f);
-		STLRenderer.alpha = colorConfig.getFloat("alpha", 0.5f);
-
-		// render: stlObject as null
-		stlRenderer = new STLRenderer(stlObject);
-		setRenderer(stlRenderer);
-		stlRenderer.requestRedraw();
-	}
-
-	/**
-	 * @param context
-	 * @return
-	 */
-	private byte[] getSTLBytes(Context context, Uri uri) {
-		byte[] stlBytes = null;
-		InputStream inputStream = null;
-		try {
-			inputStream = context.getContentResolver().openInputStream(uri);
-			stlBytes = IOUtils.toByteArray(inputStream);
-		} catch (IOException e) {
-		} finally {
-			IOUtils.closeQuietly(inputStream);
-		}
-		return stlBytes;
-	}
-
+	//双指缩放
 	//这里将偏移数值降低
 	private final float TOUCH_SCALE_FACTOR = 180.0f / 320/2;
 	private float previousX;
 	private float previousY;
-
-	private void changeDistance(float scale) {
-		stlRenderer.scale = scale;
-	}
-
-	private boolean isRotate = true;
-
-	public boolean isRotate() {
-		return isRotate;
-	}
-
-	public void setRotate(boolean isRotate) {
-		this.isRotate = isRotate;
-	}
-
 	// zoom rate (larger > 1.0f > smaller)
 	private float pinchScale = 1.0f;
-
 	private PointF pinchStartPoint = new PointF();
 	private float pinchStartZ = 0.0f;
 	private float pinchStartDistance = 0.0f;
@@ -88,12 +53,159 @@ public class STLView extends GLSurfaceView {
 	private static final int TOUCH_DRAG = 1;
 	private static final int TOUCH_ZOOM = 2;
 	private int touchMode = TOUCH_NONE;
+	//传感器
+	private float timestamp;
+	// 创建常量，把纳秒转换为秒。
+	private static final float NS2S = 1.0f / 1000000000.0f;
+	private SensorManager sensorManager;
+	private Sensor gyroscopeSensor;
+	private SensorEventListener sensorEventListener;
+	private float sensorSensitivity;//传感器灵敏度
+	//感应开关
+	private boolean isSensor;
+	private boolean isTouch;
+	private boolean isRotate;
+	private boolean isScale;
+
+
+	public STLView(Context context) {
+		this(context,null);
+	}
+
+	public STLView(Context context, AttributeSet attrs) {
+		super(context, attrs);
+		this.mContext = context;
+		init();
+	}
+
+	private void init() {
+		SharedPreferences colorConfig = mContext.getSharedPreferences("colors", Activity.MODE_PRIVATE);
+		STLRenderer.red = colorConfig.getFloat("red", 0.75f);
+		STLRenderer.green = colorConfig.getFloat("green", 0.75f);
+		STLRenderer.blue = colorConfig.getFloat("blue", 0.75f);
+		STLRenderer.alpha = colorConfig.getFloat("alpha", 0.5f);
+		ReaderBuilder builder = new ReaderBuilder();
+		try {
+			builder.Byte(IOUtils.toByteArray(mContext.getAssets().open("bai.stl")))
+					.Reader(new STLReader()).CallBack(readListener).build();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		stlRenderer = new STLRenderer(new STLModel());
+		setRenderer(stlRenderer);
+		initEvent();
+	}
+
+	private void initEvent() {
+		if (isSensor) {
+			initSensor();
+		}
+	}
+
+	public void setOnReadCallBack(OnReadCallBack OnReadCallBack) {
+		this.OnReadCallBack = OnReadCallBack;
+	}
+
+	private onReadListener readListener = new onReadListener() {
+		@Override
+		public void onstart() {
+			if (OnReadCallBack != null) {
+				OnReadCallBack.onStart();
+			}
+		}
+
+		@Override
+		public void onLoading(int cur, int total) {
+			if (OnReadCallBack != null) {
+				OnReadCallBack.onReading(cur, total);
+			}
+		}
+
+		@Override
+		public void onFinished(STLModel model) {
+			if (OnReadCallBack != null) {
+				OnReadCallBack.onFinish();
+			}
+			stlRenderer.requestRedraw(model);
+		}
+
+		@Override
+		public void onFailure(Exception e) {
+
+		}
+	};
+
+	private void changeDistance(float scale) {
+		stlRenderer.scale = scale;
+	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
+		if (!isTouch) {
+			return true;
+		}
+		//双指缩放
+		if (isScale) {
+			zoomScale(event);
+		}
+		//单指旋转
+		if (isRotate) {
+			rotateModel(event);
+		}
+		return true;
+	}
+
+	private void rotateModel(MotionEvent event) {
+		switch (event.getAction() & MotionEvent.ACTION_MASK) {
+			// start drag
+			case MotionEvent.ACTION_DOWN:
+				registerSensor(false);
+				if (touchMode == TOUCH_NONE && event.getPointerCount() == 1) {
+					touchMode = TOUCH_DRAG;
+					previousX = event.getX();
+					previousY = event.getY();
+				}
+				break;
+
+			case MotionEvent.ACTION_MOVE:
+				if (touchMode == TOUCH_DRAG) {
+					float x = event.getX();
+					float y = event.getY();
+
+					float dx = x - previousX;
+					float dy = y - previousY;
+					previousX = x;
+					previousY = y;
+
+					if (isRotate) {
+						stlRenderer.angleX += dx * TOUCH_SCALE_FACTOR;
+						stlRenderer.angleY += dy * TOUCH_SCALE_FACTOR;
+					} else {
+						// change view point
+						stlRenderer.positionX += dx * TOUCH_SCALE_FACTOR / 5;
+						stlRenderer.positionY += dy * TOUCH_SCALE_FACTOR / 5;
+					}
+					stlRenderer.requestRedraw();
+					requestRender();
+				}
+				break;
+
+			// end drag
+			case MotionEvent.ACTION_UP:
+				registerSensor(false);
+				if (touchMode == TOUCH_DRAG) {
+					touchMode = TOUCH_NONE;
+					break;
+				}
+				stlRenderer.setsclae();
+		}
+	}
+
+	private void zoomScale(MotionEvent event) {
 		switch (event.getAction() & MotionEvent.ACTION_MASK) {
 			// starts pinch
 			case MotionEvent.ACTION_POINTER_DOWN:
+				registerSensor(false);
 				if (event.getPointerCount() >= 2) {
 					pinchStartDistance = getPinchDistance(event);
 					//pinchStartZ = pinchStartDistance;
@@ -138,6 +250,7 @@ public class STLView extends GLSurfaceView {
 			// end pinch
 			case MotionEvent.ACTION_UP:
 			case MotionEvent.ACTION_POINTER_UP:
+				registerSensor(true);
 				pinchScale=0;
 				pinchStartZ=0;
 				if (touchMode == TOUCH_ZOOM) {
@@ -152,50 +265,19 @@ public class STLView extends GLSurfaceView {
 				}
 				break;
 		}
+	}
 
-		switch (event.getAction() & MotionEvent.ACTION_MASK) {
-			// start drag
-			case MotionEvent.ACTION_DOWN:
-				if (touchMode == TOUCH_NONE && event.getPointerCount() == 1) {
-					touchMode = TOUCH_DRAG;
-					previousX = event.getX();
-					previousY = event.getY();
-				}
-				break;
-
-			case MotionEvent.ACTION_MOVE:
-				if (touchMode == TOUCH_DRAG) {
-					float x = event.getX();
-					float y = event.getY();
-
-					float dx = x - previousX;
-					float dy = y - previousY;
-					previousX = x;
-					previousY = y;
-
-					if (isRotate) {
-						stlRenderer.angleX += dx * TOUCH_SCALE_FACTOR;
-						stlRenderer.angleY += dy * TOUCH_SCALE_FACTOR;
-					} else {
-						// change view point
-						stlRenderer.positionX += dx * TOUCH_SCALE_FACTOR / 5;
-						stlRenderer.positionY += dy * TOUCH_SCALE_FACTOR / 5;
-					}
-					stlRenderer.requestRedraw();
-					requestRender();
-				}
-				break;
-
-			// end drag
-			case MotionEvent.ACTION_UP:
-				if (touchMode == TOUCH_DRAG) {
-					touchMode = TOUCH_NONE;
-					break;
-				}
-				stlRenderer.setsclae();
+	/**
+	 * 传感器注册事件
+	 */
+	private void registerSensor(boolean register) {
+		if (sensorManager != null) {
+			if (register) {
+				sensorManager.unregisterListener(sensorEventListener);
+			}else{
+				sensorManager.unregisterListener(sensorEventListener);
+			}
 		}
-
-		return true;
 	}
 
 	/**
@@ -214,6 +296,49 @@ public class STLView extends GLSurfaceView {
 			e.printStackTrace();
 		}
 		return (float) Math.sqrt(x * x + y * y);
+	}
+
+	private void initSensor() {
+		sensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
+		gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+		sensorEventListener = new SensorEventListener() {
+			@Override
+			public void onSensorChanged(SensorEvent sensorEvent) {
+				if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+					if (timestamp != 0) {
+						final float dT = (sensorEvent.timestamp - timestamp) * NS2S;
+						stlRenderer.angleX += sensorEvent.values[0] * dT * 180.0f % 360.0f;
+						stlRenderer.angleY +=sensorEvent.values[1] * dT * 180.0f % 360.0f;
+						stlRenderer.requestRedraw();
+						requestRender();
+					}
+					timestamp = sensorEvent.timestamp;
+				}
+			}
+
+			@Override
+			public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+			}
+		};
+		sensorManager.registerListener(sensorEventListener, gyroscopeSensor, SensorManager
+				.SENSOR_DELAY_GAME);
+	}
+
+	public void setSensor(boolean sensor) {
+		isSensor = sensor;
+	}
+
+	public void setTouch(boolean touch) {
+		isTouch = touch;
+	}
+
+	public void setRotate(boolean rotate) {
+		isRotate = rotate;
+	}
+
+	public void setScale(boolean scale) {
+		isScale = scale;
 	}
 
 	/**

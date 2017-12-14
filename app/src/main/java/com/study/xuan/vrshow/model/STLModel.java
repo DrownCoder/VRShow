@@ -3,24 +3,22 @@ package com.study.xuan.vrshow.model;
 
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.util.Log;
 
 import com.study.xuan.vrshow.R;
 import com.study.xuan.vrshow.util.Util;
 
 import java.nio.FloatBuffer;
-import java.util.List;
 
 import javax.microedition.khronos.opengles.GL10;
 
 
 /**
- * 解析STL文件 (优化后的)
- * @author zhaowencong
- *
+ * Author : xuan.
+ * Date : 2017/12/14.
+ * Description : stl文件对应转换的3d模型数据
  */
+
 public class STLModel {
-	List<Float> normalList;
 	FloatBuffer triangleBuffer;
 	FloatBuffer normalBuffer;
 
@@ -53,22 +51,17 @@ public class STLModel {
 	}
 	
 	public void draw(GL10 gl) {
-		if (normalList == null || triangleBuffer == null) {
+		if (triangleBuffer == null) {
 			return;
 		}
-		Log.i("TTT", "draw");
 		gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
 		gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
 		//gl.glFrontFace(GL10.GL_CCW);
-		android.util.Log.i("TAG1", triangleBuffer.toString());
 		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, triangleBuffer);
-		android.util.Log.i("TAG1", normalBuffer.toString());
 		gl.glNormalPointer(GL10.GL_FLOAT,0, normalBuffer);
 		gl.glDrawArrays(GL10.GL_TRIANGLES, 0, vertext_size*3);
 		gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
 		gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
-		
-
 	}
 
 	public void setMax(float maxX, float maxY, float maxZ) {
