@@ -11,6 +11,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import android.opengl.GLSurfaceView.Renderer;
 import android.opengl.GLU;
+import android.util.Log;
 
 import com.study.xuan.vrshow.model.STLModel;
 
@@ -31,9 +32,9 @@ public class STLRenderer implements Renderer {
     //外部控制
     public float scale = 1.0f;
     //当前展示
-    private float scale_rember=1.0f;
+    private float scale_rember = 1.0f;
     //当前固定
-    private float scale_now=1.0f;
+    private float scale_now = 1.0f;
     private boolean scaleRange;
     private float SCALE_MAX;
     private float SCALE_MIN;
@@ -53,6 +54,7 @@ public class STLRenderer implements Renderer {
         this.stlObject = stlObject;
         setTransLation_Z();
     }
+
     /**
      * 简单重绘（适用于旋转等）
      */
@@ -62,6 +64,7 @@ public class STLRenderer implements Renderer {
 
     /**
      * 复杂重绘 （适用于更换文件）
+     *
      * @param stlObject
      */
     public void requestRedraw(STLModel stlObject) {
@@ -93,12 +96,13 @@ public class STLRenderer implements Renderer {
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
 
         gl.glTranslatef(positionX, -positionY, 0);
-
         // rotation and apply Z-axis
         gl.glTranslatef(0, 0, translation_z);
+        // TODO: 2017/12/14 根据angleX的范围变化，angelY的旋转中心轴需要相应的变化
         gl.glRotatef(angleX, 0, 1, 0);
         gl.glRotatef(angleY, 1, 0, 0);
-        scale_rember=scale_now*scale;
+        Log.i("angle", "angleX" + angleX + "angleY" + angleY);
+        scale_rember = scale_now * scale;
         if (scaleRange) {
             if (scale_rember > SCALE_MAX) {
                 scale_rember = SCALE_MAX;
@@ -120,36 +124,36 @@ public class STLRenderer implements Renderer {
         // draw axis
         if (displayAxes) {
             gl.glLineWidth(3f);
-            float[] vertexArray = { -100, 0, 0, 100, 0, 0, 0, -100, 0, 0, 100, 0, 0, 0, -100, 0, 0, 100 };
+            float[] vertexArray = {-100, 0, 0, 100, 0, 0, 0, -100, 0, 0, 100, 0, 0, 0, -100, 0, 0, 100};
             FloatBuffer lineBuffer = getFloatBufferFromArray(vertexArray);
             gl.glVertexPointer(3, GL10.GL_FLOAT, 0, lineBuffer);
 
             // X : red
-            gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, new float[] { 1.0f, 0f, 0f, 0.75f }, 0);
-            gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, new float[] { 1.0f, 0f, 0f, 0.5f }, 0);
+            gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, new float[]{1.0f, 0f, 0f, 0.75f}, 0);
+            gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, new float[]{1.0f, 0f, 0f, 0.5f}, 0);
             gl.glDrawArrays(GL10.GL_LINES, 0, 2);
 
             // Y : blue
-            gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, new float[] { 0f, 0f, 1.0f, 0.75f }, 0);
-            gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, new float[] { 0f, 0f, 1.0f, 0.5f }, 0);
+            gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, new float[]{0f, 0f, 1.0f, 0.75f}, 0);
+            gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, new float[]{0f, 0f, 1.0f, 0.5f}, 0);
             gl.glDrawArrays(GL10.GL_LINES, 2, 2);
 
             // Z : green
-            gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, new float[] { 0f, 1.0f, 0f, 0.75f }, 0);
-            gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, new float[] { 0f, 1.0f, 0f, 0.5f }, 0);
+            gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, new float[]{0f, 1.0f, 0f, 0.75f}, 0);
+            gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, new float[]{0f, 1.0f, 0f, 0.5f}, 0);
             gl.glDrawArrays(GL10.GL_LINES, 4, 2);
         }
 
         // draw object
         if (stlObject != null) {
             // FIXME transparency applying does not correctly
-            gl.glMaterialfv(GL10.GL_FRONT, GL10.GL_AMBIENT, new float[] { 0.75f,0.75f,0.75f,1.0f }, 0);
+            gl.glMaterialfv(GL10.GL_FRONT, GL10.GL_AMBIENT, new float[]{0.75f, 0.75f, 0.75f, 1.0f}, 0);
 
-            gl.glMaterialfv(GL10.GL_FRONT, GL10.GL_DIFFUSE, new float[] { 0.75f,0.75f,0.75f,1.0f }, 0);
+            gl.glMaterialfv(GL10.GL_FRONT, GL10.GL_DIFFUSE, new float[]{0.75f, 0.75f, 0.75f, 1.0f}, 0);
 
             gl.glEnable(GL10.GL_COLOR_MATERIAL);
             gl.glPushMatrix();
-            gl.glColor4f(red,green,blue, 1.0f);
+            gl.glColor4f(red, green, blue, 1.0f);
             stlObject.draw(gl);
             gl.glPopMatrix();
             gl.glDisable(GL10.GL_COLOR_MATERIAL);
@@ -220,14 +224,16 @@ public class STLRenderer implements Renderer {
 
         // Lighting
         gl.glEnable(GL10.GL_LIGHTING);
-        gl.glLightModelfv(GL10.GL_LIGHT_MODEL_AMBIENT, getFloatBufferFromArray(new  float[]{0.5f,0.5f,0.5f,1.0f}));// 全局环境光
+        gl.glLightModelfv(GL10.GL_LIGHT_MODEL_AMBIENT, getFloatBufferFromArray(new float[]{0.5f, 0.5f, 0.5f, 1.0f}));// 全局环境光
         gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_AMBIENT_AND_DIFFUSE, new float[]{0.3f, 0.3f, 0.3f, 1.0f}, 0);
-        gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_POSITION, new float[] { 0f, 0f, 1000f, 1.0f }, 0);
+        gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_POSITION, new float[]{0f, 0f, 1000f, 1.0f}, 0);
         gl.glEnable(GL10.GL_LIGHT0);
 
     }
+
     /**
      * 画网格
+     *
      * @param gl
      */
     private void drawGrids(GL10 gl) {
@@ -237,7 +243,7 @@ public class STLRenderer implements Renderer {
             lineList.add((float) x);
             lineList.add(-100f);
             lineList.add(0f);
-            lineList.add((float)x);
+            lineList.add((float) x);
             lineList.add(100f);
             lineList.add(0f);
         }
@@ -261,34 +267,35 @@ public class STLRenderer implements Renderer {
 
     /**
      * 画坐标
+     *
      * @param gl
      */
-    private void drawLines(GL10 gl){
+    private void drawLines(GL10 gl) {
         gl.glLineWidth(3f);
-        float[] vertexArray = { -100, 0, 0, 100, 0, 0, 0, -100, 0, 0, 100, 0, 0, 0, -100, 0, 0, 100 };
+        float[] vertexArray = {-100, 0, 0, 100, 0, 0, 0, -100, 0, 0, 100, 0, 0, 0, -100, 0, 0, 100};
         FloatBuffer lineBuffer = getFloatBufferFromArray(vertexArray);
         gl.glVertexPointer(3, GL10.GL_FLOAT, 0, lineBuffer);
 
         // X : red
-        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, new float[] { 1.0f, 0f, 0f, 0.75f }, 0);
-        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, new float[] { 1.0f, 0f, 0f, 0.5f }, 0);
+        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, new float[]{1.0f, 0f, 0f, 0.75f}, 0);
+        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, new float[]{1.0f, 0f, 0f, 0.5f}, 0);
         gl.glDrawArrays(GL10.GL_LINES, 0, 2);
 
         // Y : blue
-        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, new float[] { 0f, 0f, 1.0f, 0.75f }, 0);
-        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, new float[] { 0f, 0f, 1.0f, 0.5f }, 0);
+        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, new float[]{0f, 0f, 1.0f, 0.75f}, 0);
+        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, new float[]{0f, 0f, 1.0f, 0.5f}, 0);
         gl.glDrawArrays(GL10.GL_LINES, 2, 2);
 
         // Z : green
-        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, new float[] { 0f, 1.0f, 0f, 0.75f }, 0);
-        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, new float[] { 0f, 1.0f, 0f, 0.5f }, 0);
+        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, new float[]{0f, 1.0f, 0f, 0.75f}, 0);
+        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, new float[]{0f, 1.0f, 0f, 0.5f}, 0);
         gl.glDrawArrays(GL10.GL_LINES, 4, 2);
     }
 
     /**
      * 调整Z轴平移位置    （目的式为了模型展示大小适中）
      */
-    private void setTransLation_Z (){
+    private void setTransLation_Z() {
         //算x、y轴差值
         float distance_x = stlObject.maxX - stlObject.minX;
         float distance_y = stlObject.maxY - stlObject.minY;
@@ -302,16 +309,18 @@ public class STLRenderer implements Renderer {
         }
         translation_z *= -2;
     }
-    public void delete(){
+
+    public void delete() {
         stlObject.delete();
-        stlObject=null;
+        stlObject = null;
     }
+
     /**
      * 固定缩放比例
      */
-    public void setsclae(){
-        scale_now=scale_rember;
-        scale_rember=1.0f;
-        scale=1.0f;
+    public void setsclae() {
+        scale_now = scale_rember;
+        scale_rember = 1.0f;
+        scale = 1.0f;
     }
 }
