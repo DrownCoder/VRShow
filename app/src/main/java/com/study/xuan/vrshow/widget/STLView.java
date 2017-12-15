@@ -1,7 +1,5 @@
 package com.study.xuan.vrshow.widget;
 
-import java.io.IOException;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -21,6 +19,8 @@ import com.study.xuan.vrshow.model.STLModel;
 import com.study.xuan.vrshow.operate.ReaderBuilder;
 import com.study.xuan.vrshow.operate.STLReader;
 import com.study.xuan.vrshow.util.IOUtils;
+
+import java.io.IOException;
 
 /**
  * Author : xuan.
@@ -86,20 +86,13 @@ public class STLView extends GLSurfaceView {
         STLRenderer.alpha = colorConfig.getFloat("alpha", 0.5f);
         ReaderBuilder builder = new ReaderBuilder();
         try {
-            builder.Byte(IOUtils.toByteArray(mContext.getAssets().open("bai.stl")))
+            builder.Byte(IOUtils.toByteArray(mContext.getAssets().open("BelleBook_Big.stl")))
                     .Reader(new STLReader()).CallBack(readListener).build();
         } catch (IOException e) {
             e.printStackTrace();
         }
         stlRenderer = new STLRenderer(new STLModel());
         setRenderer(stlRenderer);
-        initEvent();
-    }
-
-    private void initEvent() {
-        if (isSensor) {
-            initSensor();
-        }
     }
 
     public void setOnReadCallBack(OnReadCallBack OnReadCallBack) {
@@ -123,6 +116,9 @@ public class STLView extends GLSurfaceView {
 
         @Override
         public void onFinished(STLModel model) {
+            if (isSensor) {
+                initSensor();
+            }
             if (OnReadCallBack != null) {
                 OnReadCallBack.onFinish();
             }
@@ -178,18 +174,16 @@ public class STLView extends GLSurfaceView {
                     float dx = x - previousX;
                     float dy = y - previousY;
                     //一次只移动一个方向
-                    // TODO: 2017/12/14 小范围不算旋转
-                    if (Math.abs(dx) > Math.abs(dy)) {
-                        previousX = x;
-                    } else {
-                        previousY = y;
-                    }
+                    previousX = x;
+                    previousY = y;
 
                     if (isRotate) {
                         if (Math.abs(dx) > Math.abs(dy)) {
-                            stlRenderer.angleX += dx * TOUCH_SCALE_FACTOR;
+                            stlRenderer.angleX = (stlRenderer.angleX + dx * TOUCH_SCALE_FACTOR) %
+                                    360.0f;
                         } else {
-                            stlRenderer.angleY += dy * TOUCH_SCALE_FACTOR;
+                            stlRenderer.angleY = (stlRenderer.angleY + dy * TOUCH_SCALE_FACTOR) %
+                                    360.0f;
                         }
                     } else {
                         // change view point
@@ -203,7 +197,7 @@ public class STLView extends GLSurfaceView {
 
             // end drag
             case MotionEvent.ACTION_UP:
-                registerSensor(false);
+                registerSensor(true);
                 if (touchMode == TOUCH_DRAG) {
                     touchMode = TOUCH_NONE;
                     break;
@@ -287,7 +281,8 @@ public class STLView extends GLSurfaceView {
     private void registerSensor(boolean register) {
         if (sensorManager != null) {
             if (register) {
-                sensorManager.unregisterListener(sensorEventListener);
+                sensorManager.registerListener(sensorEventListener, gyroscopeSensor, SensorManager
+                        .SENSOR_DELAY_GAME);
             } else {
                 sensorManager.unregisterListener(sensorEventListener);
             }
@@ -347,10 +342,12 @@ public class STLView extends GLSurfaceView {
     }
 
     public void setRotate(boolean rotate) {
+        isTouch = true;
         isRotate = rotate;
     }
 
     public void setScale(boolean scale) {
+        isTouch = true;
         isScale = scale;
     }
 

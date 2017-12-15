@@ -1,5 +1,11 @@
 package com.study.xuan.vrshow.widget;
 
+import android.opengl.GLSurfaceView.Renderer;
+import android.opengl.GLU;
+import android.util.Log;
+
+import com.study.xuan.vrshow.model.STLModel;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -8,12 +14,6 @@ import java.util.List;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-
-import android.opengl.GLSurfaceView.Renderer;
-import android.opengl.GLU;
-import android.util.Log;
-
-import com.study.xuan.vrshow.model.STLModel;
 
 /**
  * Author : xuan.
@@ -94,14 +94,14 @@ public class STLRenderer implements Renderer {
         bufferCounter--;
         gl.glLoadIdentity();
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
-
         gl.glTranslatef(positionX, -positionY, 0);
         // rotation and apply Z-axis
         gl.glTranslatef(0, 0, translation_z);
-        // TODO: 2017/12/14 根据angleX的范围变化，angelY的旋转中心轴需要相应的变化
         gl.glRotatef(angleX, 0, 1, 0);
         gl.glRotatef(angleY, 1, 0, 0);
+        gl.glPopMatrix();
         Log.i("angle", "angleX" + angleX + "angleY" + angleY);
+
         scale_rember = scale_now * scale;
         if (scaleRange) {
             if (scale_rember > SCALE_MAX) {
@@ -116,8 +116,10 @@ public class STLRenderer implements Renderer {
 
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         // draw X-Y field
-        if (!displayGrids) {
+        if (displayGrids) {
             drawGrids(gl);
+        }
+        if (displayAxes) {
             drawLines(gl);
         }
 

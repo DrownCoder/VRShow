@@ -7,6 +7,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,9 +17,16 @@ import android.widget.Toast;
 import com.study.xuan.vrshow.callback.OnReadCallBack;
 import com.study.xuan.vrshow.widget.STLView;
 
+import java.io.IOException;
+
+import pl.droidsonroids.gif.GifDrawable;
+import pl.droidsonroids.gif.GifImageView;
+
 public class MainActivity extends AppCompatActivity{
     private boolean supportsEs2;
-    private STLView stlView;
+    //private STLView stlView;
+    private GifImageView gifIv;
+    private GifDrawable gifDrawable;
     private FrameLayout container;
     private TextView mTvProgress;
     private Bundle bundle = new Bundle();
@@ -38,7 +48,8 @@ public class MainActivity extends AppCompatActivity{
         if (supportsEs2) {
             setContentView(R.layout.activity_main);
             container = (FrameLayout) findViewById(R.id.container);
-            stlView = (STLView) findViewById(R.id.stlview);
+            gifIv = (GifImageView) findViewById(R.id.gif);
+            //stlView = (STLView) findViewById(R.id.stlview);
             mTvProgress = (TextView) findViewById(R.id.progress);
             initEvent();
         } else {
@@ -49,8 +60,35 @@ public class MainActivity extends AppCompatActivity{
     }
 
     private void initEvent() {
-        stlView.setTouch(true);
-        stlView.setRotate(true);
+        try {
+            gifDrawable = new GifDrawable(getResources(),R.drawable.demo);
+            gifIv.setImageDrawable(gifDrawable);
+            Log.i("GIFTime", gifDrawable.getDuration()+"");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        gifIv.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        gifDrawable.stop();
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        gifDrawable.stop();
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        gifDrawable.seekTo(gifDrawable.getDuration()/2);
+                        break;
+                }
+                return true;
+            }
+        });
+
+
+        /*stlView.setRotate(true);
+        stlView.setScale(true);
+        stlView.setSensor(true);
         stlView.setOnReadCallBack(new OnReadCallBack() {
             @Override
             public void onStart() {
@@ -70,7 +108,7 @@ public class MainActivity extends AppCompatActivity{
             public void onFinish() {
                 mTvProgress.setText("解析完成！");
             }
-        });
+        });*/
     }
 
 
@@ -127,8 +165,8 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onPause() {
         super.onPause();
-        if (stlView != null) {
+        /*if (stlView != null) {
             stlView.onPause();
-        }
+        }*/
     }
 }

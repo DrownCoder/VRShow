@@ -6,10 +6,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
-    <com.study.xuan.vrshow.widget.STLView
+    <!--<com.study.xuan.vrshow.widget.STLView
         android:id="@+id/stlview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"/>-->
+    <pl.droidsonroids.gif.GifImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/demo"
+        android:id="@+id/gif"
+        />
     <TextView
         android:id="@+id/progress"
         android:layout_width="wrap_content"

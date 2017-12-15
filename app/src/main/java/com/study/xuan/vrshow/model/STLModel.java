@@ -8,6 +8,7 @@ import com.study.xuan.vrshow.R;
 import com.study.xuan.vrshow.util.Util;
 
 import java.nio.FloatBuffer;
+import java.util.Map;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -32,6 +33,7 @@ public class STLModel {
 	//优化使用的数组
 	public  float[] normal_array=null;
 	public  float[] vertex_array=null;
+	public Map<Integer,Float> center_array;
 	private  int vertext_size=0;
 	
 	
@@ -92,4 +94,5 @@ public class STLModel {
 		this.normal_array = vnorms;
 		this.normalBuffer = Util.floatToBuffer(normal_array);
 	}
+
 }
