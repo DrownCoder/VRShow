@@ -11,7 +11,6 @@
     <string name="choose_stl_file">选择STL文件</string>
 
 
-
     <!-- toggle button -->
     <string name="toggleButtonMove">移动</string>
     <string name="toggleButtonRotate">旋转</string>

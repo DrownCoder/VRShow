@@ -1,91 +1,71 @@
 package com.study.xuan.vrshow;
 
 import android.app.ActivityManager;
+import android.content.Intent;
 import android.content.pm.ConfigurationInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.study.xuan.vrshow.callback.OnReadCallBack;
-import com.study.xuan.vrshow.widget.STLView;
-
-import java.io.IOException;
-
-import pl.droidsonroids.gif.GifDrawable;
-import pl.droidsonroids.gif.GifImageView;
 
 public class MainActivity extends AppCompatActivity{
     private boolean supportsEs2;
-    //private STLView stlView;
-    private GifImageView gifIv;
-    private GifDrawable gifDrawable;
-    private FrameLayout container;
+    private TextView mTvGif;
+    private TextView mTvStl;
+    private TextView mTvGoogle;
     private TextView mTvProgress;
-    private Bundle bundle = new Bundle();
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            Bundle bundle = msg.getData();
-            int cur = bundle.getInt("cur");
-            int total = bundle.getInt("total");
-            mTvProgress.setText(cur + "/" + total);
-            super.handleMessage(msg);
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        checkSupported();
+        setContentView(R.layout.activity_main);
+        initView();
+        initEvent();
+        /*checkSupported();
         if (supportsEs2) {
             setContentView(R.layout.activity_main);
-            container = (FrameLayout) findViewById(R.id.container);
-            gifIv = (GifImageView) findViewById(R.id.gif);
-            //stlView = (STLView) findViewById(R.id.stlview);
-            mTvProgress = (TextView) findViewById(R.id.progress);
-            initEvent();
         } else {
             setContentView(R.layout.activity_main);
             Toast.makeText(this, "当前设备不支持OpenGL ES 2.0!", Toast.LENGTH_SHORT).show();
-        }
+        }*/
 
     }
 
+    private void initView() {
+        mTvGif = (TextView) findViewById(R.id.gif);
+        mTvStl = (TextView) findViewById(R.id.stl);
+        mTvGoogle = (TextView) findViewById(R.id.google);
+    }
+
     private void initEvent() {
-        try {
-            gifDrawable = new GifDrawable(getResources(),R.drawable.demo);
-            gifIv.setImageDrawable(gifDrawable);
-            Log.i("GIFTime", gifDrawable.getDuration()+"");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        gifIv.setOnTouchListener(new View.OnTouchListener() {
+        mTvGif.setOnClickListener(new View.OnClickListener() {
             @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        gifDrawable.stop();
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        gifDrawable.stop();
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        gifDrawable.seekTo(gifDrawable.getDuration()/2);
-                        break;
-                }
-                return true;
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, GifActivity.class);
+                startActivity(intent);
             }
         });
 
+        mTvStl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, STLActivity.class);
+                startActivity(intent);
+            }
+        });
 
+        mTvGoogle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, GoogleActivity.class);
+                startActivity(intent);
+            }
+        });
         /*stlView.setRotate(true);
         stlView.setScale(true);
         stlView.setSensor(true);
