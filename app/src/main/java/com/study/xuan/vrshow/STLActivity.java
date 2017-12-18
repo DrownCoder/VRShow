@@ -2,11 +2,11 @@ package com.study.xuan.vrshow;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.widget.ProgressBar;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.study.xuan.stlshow.callback.OnReadCallBack;
@@ -21,9 +21,11 @@ public class STLActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             Bundle bundle = msg.getData();
-            int cur = bundle.getInt("cur");
-            int total = bundle.getInt("total");
-            mBar.setProgress(cur / total * 100);
+            float cur = bundle.getFloat("cur");
+            float total = bundle.getFloat("total");
+            float progress = cur / total;
+            Log.i("Progress", progress + "");
+            mBar.setProgress((int) (progress * 100.0f));
         }
     };
     @Override
@@ -33,6 +35,7 @@ public class STLActivity extends AppCompatActivity {
         mContext = this;
         mStl = (STLView) findViewById(R.id.stl);
         mBar = prepareProgressDialog(mContext);
+        mBar.show();
         mStl.setOnReadCallBack(new OnReadCallBack() {
             @Override
             public void onStart() {
@@ -42,8 +45,8 @@ public class STLActivity extends AppCompatActivity {
 
             @Override
             public void onReading(int cur, int total) {
-                bundle.putInt("cur", cur);
-                bundle.putInt("total", total);
+                bundle.putFloat("cur", cur);
+                bundle.putFloat("total", total);
                 Message msg = new Message();
                 msg.setData(bundle);
                 handler.sendMessage(msg);
