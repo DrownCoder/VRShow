@@ -6,12 +6,14 @@ import com.study.xuan.stlshow.callback.OnReadListener;
 import com.study.xuan.stlshow.model.STLModel;
 import com.study.xuan.stlshow.util.STLUtils;
 
+import java.io.InputStream;
+
 /**
  * Author : xuan.
  * Date : 2017/12/10.
  * Description : 异步加载Stl文件
  */
-public class ReaderHandler {
+public class ReaderHandler<T> {
     private ISTLReader reader;
     private ReaderTask backWorker;
     private OnReadListener listener;
@@ -22,31 +24,51 @@ public class ReaderHandler {
         backWorker = new ReaderTask();
     }
 
-    public void read(byte[] stlBytes) {
+    public void read(T source) {
         try {
-            backWorker.execute(stlBytes);
+            backWorker.execute(source);
         } catch (Exception e) {
             listener.onFailure(e);
         }
     }
 
-    private class ReaderTask extends AsyncTask<byte[], Integer,STLModel>{
+    /*public void read(byte[] stlBytes) {
+        try {
+            backWorker.execute(stlBytes);
+        } catch (Exception e) {
+            listener.onFailure(e);
+        }
+    }*/
+
+    private class ReaderTask extends AsyncTask<Object, Integer,STLModel>{
         @Override
         protected void onPreExecute() {
             listener.onstart();
         }
 
         @Override
-        protected STLModel doInBackground(byte[]... bytes) {
-            STLModel model;
-            if (STLUtils.isAscii(bytes[0])) {
-                //parser ascii code
-                model = reader.parserAsciiStl(bytes[0]);
-            }else{
-                // parser bin code
-                model = reader.parserBinStl(bytes[0]);
+        protected STLModel doInBackground(Object... source) {
+            STLModel model = null;
+            if (source[0] instanceof byte[]) {
+                model = parserByte((byte[]) source[0]);
+            } else if (source[0] instanceof InputStream) {
+                model = parserStream((InputStream) source[0]);
             }
             return model;
+        }
+
+        private STLModel parserStream(InputStream is) {
+            return reader.parserBinStl(is);
+        }
+
+        private STLModel parserByte(byte[] bytes) {
+            if (STLUtils.isAscii(bytes)) {
+                //parser ascii code
+                return reader.parserAsciiStl(bytes);
+            }else{
+                // parser bin code
+                return reader.parserBinStl(bytes);
+            }
         }
 
         @Override

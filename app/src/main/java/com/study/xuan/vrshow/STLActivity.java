@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import com.study.xuan.stlshow.callback.OnReadCallBack;
 import com.study.xuan.stlshow.widget.STLView;
+import com.study.xuan.stlshow.widget.STLViewBuilder;
 
 public class STLActivity extends AppCompatActivity {
     private STLView mStl;
@@ -35,7 +36,6 @@ public class STLActivity extends AppCompatActivity {
         mContext = this;
         mStl = (STLView) findViewById(R.id.stl);
         mBar = prepareProgressDialog(mContext);
-        mBar.show();
         mStl.setOnReadCallBack(new OnReadCallBack() {
             @Override
             public void onStart() {
@@ -57,6 +57,7 @@ public class STLActivity extends AppCompatActivity {
                 mBar.dismiss();
             }
         });
+        STLViewBuilder.init(mStl).Assets(this, "bai.stl").build();
         mStl.setTouch(true);
         mStl.setScale(true);
         mStl.setRotate(true);

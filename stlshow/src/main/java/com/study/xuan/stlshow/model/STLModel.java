@@ -1,5 +1,8 @@
 package com.study.xuan.stlshow.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.study.xuan.stlshow.util.STLUtils;
 
 import java.nio.FloatBuffer;
@@ -12,7 +15,7 @@ import javax.microedition.khronos.opengles.GL10;
  * Description : stl文件对应转换的3d模型数据
  */
 
-public class STLModel {
+public class STLModel implements Parcelable {
 	FloatBuffer triangleBuffer;
 	FloatBuffer normalBuffer;
 
@@ -27,6 +30,23 @@ public class STLModel {
 	public  float[] normal_array=null;
 	public  float[] vertex_array=null;
 	private  int vertext_size=0;
+
+	public STLModel() {
+	}
+
+	public STLModel(Parcel source) {
+		maxX = source.readFloat();
+		maxY = source.readFloat();
+		maxZ = source.readFloat();
+		minX = source.readFloat();
+		minY = source.readFloat();
+		minZ = source.readFloat();
+		vertext_size = source.readInt();
+		source.readFloatArray(normal_array);
+		source.readFloatArray(vertex_array);
+		setVnorms(normal_array);
+		setVnorms(vertex_array);
+	}
 
 	public void draw(GL10 gl) {
 		if (triangleBuffer == null) {
@@ -71,4 +91,33 @@ public class STLModel {
 		this.normalBuffer = STLUtils.floatToBuffer(normal_array);
 	}
 
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		dest.writeFloat(maxX);
+		dest.writeFloat(maxY);
+		dest.writeFloat(maxZ);
+		dest.writeFloat(minX);
+		dest.writeFloat(minY);
+		dest.writeFloat(minZ);
+		dest.writeInt(vertext_size);
+		dest.writeFloatArray(normal_array);
+		dest.writeFloatArray(vertex_array);
+	}
+
+	public static final Creator<STLModel> CREATOR = new Creator<STLModel>() {
+		@Override
+		public STLModel createFromParcel(Parcel source) {
+			return new STLModel(source);
+		}
+
+		@Override
+		public STLModel[] newArray(int size) {
+			return new STLModel[size];
+		}
+	};
 }

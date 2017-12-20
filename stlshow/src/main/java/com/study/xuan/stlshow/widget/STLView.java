@@ -8,19 +8,15 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.net.Uri;
 import android.opengl.GLSurfaceView;
+import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 
 import com.study.xuan.stlshow.callback.OnReadCallBack;
 import com.study.xuan.stlshow.callback.OnReadListener;
 import com.study.xuan.stlshow.model.STLModel;
-import com.study.xuan.stlshow.operate.ReaderBuilder;
-import com.study.xuan.stlshow.operate.STLReader;
-import com.study.xuan.stlshow.util.IOUtils;
-
-import java.io.IOException;
 
 /**
  * Author : xuan.
@@ -30,7 +26,6 @@ import java.io.IOException;
 
 public class STLView extends GLSurfaceView {
     private STLRenderer stlRenderer;
-    private Uri uri;
     private Context mContext;
     private OnReadCallBack onReadCallBack;
     //控制缩放速度的
@@ -60,12 +55,13 @@ public class STLView extends GLSurfaceView {
     private SensorManager sensorManager;
     private Sensor gyroscopeSensor;
     private SensorEventListener sensorEventListener;
-    private float sensorSensitivity;//传感器灵敏度
     //感应开关
     private boolean isSensor;
     private boolean isTouch;
     private boolean isRotate;
     private boolean isScale;
+
+    private STLModel modelData;
 
 
     public STLView(Context context) {
@@ -84,13 +80,6 @@ public class STLView extends GLSurfaceView {
         STLRenderer.green = colorConfig.getFloat("green", 0.75f);
         STLRenderer.blue = colorConfig.getFloat("blue", 0.75f);
         STLRenderer.alpha = colorConfig.getFloat("alpha", 0.5f);
-        ReaderBuilder builder = new ReaderBuilder();
-        try {
-            builder.Byte(IOUtils.toByteArray(mContext.getAssets().open("BelleBook_Big.stl")))
-                    .Reader(new STLReader()).CallBack(readListener).build();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         stlRenderer = new STLRenderer(new STLModel());
         setRenderer(stlRenderer);
     }
@@ -99,7 +88,11 @@ public class STLView extends GLSurfaceView {
         this.onReadCallBack = onReadCallBack;
     }
 
-    private OnReadListener readListener = new OnReadListener() {
+    public OnReadListener getReadListener() {
+        return readListener;
+    }
+
+    private final OnReadListener readListener = new OnReadListener() {
         @Override
         public void onstart() {
             if (onReadCallBack != null) {
@@ -116,6 +109,7 @@ public class STLView extends GLSurfaceView {
 
         @Override
         public void onFinished(STLModel model) {
+            modelData = model;
             if (isSensor) {
                 initSensor();
             }
@@ -360,8 +354,31 @@ public class STLView extends GLSurfaceView {
         pt.y = (event.getY(0) + event.getY(1)) * 0.5f;
     }
 
-    public Uri getUri() {
-        return uri;
+    @Override
+    protected Parcelable onSaveInstanceState() {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("super_state", super.onSaveInstanceState());
+        bundle.putParcelable("model", modelData);
+        bundle.putBoolean("isRotate", isRotate);
+        bundle.putBoolean("isScale", isScale);
+        bundle.putBoolean("isSensor", isSensor);
+        bundle.putBoolean("isTouch", isTouch);
+        return bundle;
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Parcelable state) {
+        if (state instanceof Bundle) {
+            Bundle bundle = (Bundle) state;
+            setTouch(bundle.getBoolean("isTouch"));
+            setRotate(bundle.getBoolean("isRotate"));
+            setScale(bundle.getBoolean("isScale"));
+            setSensor(bundle.getBoolean("isSensor"));
+            setNewSTLObject((STLModel) bundle.getParcelable("model"));
+            super.onRestoreInstanceState(bundle.getParcelable("super_state"));
+            return;
+        }
+        super.onRestoreInstanceState(state);
     }
 
     /**
@@ -370,6 +387,7 @@ public class STLView extends GLSurfaceView {
      * @param stlObject
      */
     public void setNewSTLObject(STLModel stlObject) {
+        this.modelData = stlObject;
         stlRenderer.requestRedraw(stlObject);
     }
 
