@@ -15,6 +15,7 @@ Step 2. Add the dependency
 	        compile 'com.github.sdfdzx:VRShow:v1.0.0'
 	}
 ### 1.全景360°GIF图
+![全景360°GIF图](https://github.com/sdfdzx/VRShow/blob/master/gif/gifdemofinal.gif)  
 
 **功能：**  
 >1.支持单指拖拽  
@@ -46,6 +47,8 @@ public class GifActivity extends AppCompatActivity {
 }
 ```
 ### 2.3D模型展示  
+![3D模型展示](https://github.com/sdfdzx/VRShow/blob/master/gif/book.gif)  
+
 **功能：**  
 >1.异步读取STL格式的3D文件  
 >2.支持进度回调  
