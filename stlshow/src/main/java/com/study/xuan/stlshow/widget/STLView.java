@@ -28,8 +28,6 @@ public class STLView extends GLSurfaceView {
     private STLRenderer stlRenderer;
     private Context mContext;
     private OnReadCallBack onReadCallBack;
-    //控制缩放速度的
-    static int CONTROL = 10;
     //双指缩放
     //这里将偏移数值降低
     private final float TOUCH_SCALE_FACTOR = 180.0f / 1080 / 2;

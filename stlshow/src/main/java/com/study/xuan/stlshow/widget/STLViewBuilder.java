@@ -74,16 +74,9 @@ public class STLViewBuilder {
     }
 
     public STLViewBuilder InputStream(InputStream inputStream) {
-        /*type = TYPE_STREAM;
+        type = TYPE_STREAM;
         hasSource = true;
-        this.is = inputStream;*/
-        return Source(inputStream);
-        //return this;
-    }
-
-    public STLViewBuilder Source(Object source) {
-        hasSource = true;
-        this.obj = source;
+        this.is = inputStream;
         return this;
     }
 
@@ -97,7 +90,7 @@ public class STLViewBuilder {
             reader.setCallBack(this.listener);
         }
         handler = new ReaderHandler(reader, listener);
-        /*try {
+        try {
             switch (type) {
                 case TYPE_BYTE:
                     handler.read(bytes);
@@ -106,12 +99,12 @@ public class STLViewBuilder {
                     handler.read(IOUtils.toByteArray(new FileInputStream(file)));
                     break;
                 case TYPE_STREAM:
-                    handler.read(is);
+                    handler.read(IOUtils.toByteArray(is));
+                    break;
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }*/
-        handler.read(obj);
+        }
         return this;
     }
 }

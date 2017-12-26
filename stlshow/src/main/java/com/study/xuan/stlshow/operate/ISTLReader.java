@@ -15,11 +15,7 @@ import java.io.InputStream;
 public interface ISTLReader {
     public STLModel parserBinStl(byte[] bytes);
 
-    public STLModel parserBinStl(InputStream in);
-
     public STLModel parserAsciiStl(byte[] bytes);
-
-    public STLModel parserAsciiStl(InputStream in);
 
     public void setCallBack(OnReadListener listener);
 }

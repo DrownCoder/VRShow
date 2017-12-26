@@ -14,6 +14,7 @@ public class GifActivity extends AppCompatActivity {
         mGif = (VrGifView) findViewById(R.id.gif);
         mGif.setTouch(true);
         mGif.setDrag(true);
-        mGif.setScale(true);
+        mGif.setMoveMode(VrGifView.MODE_FAST);
+        mGif.setScale(false);
     }
 }

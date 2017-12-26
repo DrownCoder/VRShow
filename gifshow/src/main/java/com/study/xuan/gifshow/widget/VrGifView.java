@@ -45,11 +45,7 @@ public class VrGifView extends GifImageView {
     private ObjectAnimator scaleAnimator;
     private boolean isUp;
     private Animator.AnimatorListener listener;
-    //外部控制
-    public float scale = 1.0f;
-    //当前展示
-    private float scale_rember = 1.0f;
-    //当前固定
+    //当前缩放量
     private float scale_now = 1.0f;
     //触摸模式
     private static final int TOUCH_NONE = 0;
