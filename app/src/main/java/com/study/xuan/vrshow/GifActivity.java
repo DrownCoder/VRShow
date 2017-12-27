@@ -3,7 +3,7 @@ package com.study.xuan.vrshow;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-import com.study.xuan.gifshow.widget.VrGifView;
+import com.study.xuan.gifshow.gif.VrGifView;
 
 public class GifActivity extends AppCompatActivity {
     private VrGifView mGif;
@@ -14,7 +14,7 @@ public class GifActivity extends AppCompatActivity {
         mGif = (VrGifView) findViewById(R.id.gif);
         mGif.setTouch(true);
         mGif.setDrag(true);
-        mGif.setMoveMode(VrGifView.MODE_FAST);
         mGif.setScale(false);
+        mGif.setMoveMode(VrGifView.MODE_FAST);
     }
 }

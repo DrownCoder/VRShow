@@ -1,4 +1,4 @@
-package com.study.xuan.stlshow.util;
+package com.study.xuan.gifshow.widget.stlview.util;
 
 import android.content.Context;
 import android.view.Display;

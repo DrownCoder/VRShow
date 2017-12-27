@@ -1,4 +1,4 @@
-package com.study.xuan.gifshow.widget;
+package com.study.xuan.gifshow.gif;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;

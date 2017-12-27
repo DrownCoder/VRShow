@@ -1,9 +1,9 @@
-package com.study.xuan.stlshow.model;
+package com.study.xuan.gifshow.widget.stlview.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.study.xuan.stlshow.util.STLUtils;
+import com.study.xuan.gifshow.widget.stlview.util.STLUtils;
 
 import java.nio.FloatBuffer;
 import javax.microedition.khronos.opengles.GL10;

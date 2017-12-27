@@ -1,13 +1,13 @@
-package com.study.xuan.stlshow.widget;
+package com.study.xuan.gifshow.widget.stlview.widget;
 
 import android.content.Context;
 import android.util.Log;
 
-import com.study.xuan.stlshow.callback.OnReadListener;
-import com.study.xuan.stlshow.operate.ISTLReader;
-import com.study.xuan.stlshow.operate.ReaderHandler;
-import com.study.xuan.stlshow.operate.STLReader;
-import com.study.xuan.stlshow.util.IOUtils;
+import com.study.xuan.gifshow.widget.stlview.callback.OnReadListener;
+import com.study.xuan.gifshow.widget.stlview.operate.ISTLReader;
+import com.study.xuan.gifshow.widget.stlview.operate.ReaderHandler;
+import com.study.xuan.gifshow.widget.stlview.operate.STLReader;
+import com.study.xuan.gifshow.widget.stlview.util.IOUtils;
 
 import java.io.File;
 import java.io.FileInputStream;

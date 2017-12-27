@@ -1,10 +1,10 @@
-package com.study.xuan.stlshow.operate;
+package com.study.xuan.gifshow.widget.stlview.operate;
 
 import android.os.AsyncTask;
 
-import com.study.xuan.stlshow.callback.OnReadListener;
-import com.study.xuan.stlshow.model.STLModel;
-import com.study.xuan.stlshow.util.STLUtils;
+import com.study.xuan.gifshow.widget.stlview.callback.OnReadListener;
+import com.study.xuan.gifshow.widget.stlview.model.STLModel;
+import com.study.xuan.gifshow.widget.stlview.util.STLUtils;
 
 /**
  * Author : xuan.

@@ -1,4 +1,4 @@
-package com.study.xuan.stlshow.callback;
+package com.study.xuan.gifshow.widget.stlview.callback;
 
 /**
  * Author : xuan.

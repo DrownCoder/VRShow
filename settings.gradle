@@ -1,1 +1,1 @@
-include ':app', ':stlshow', ':gifshow'
+include ':app', ':library'

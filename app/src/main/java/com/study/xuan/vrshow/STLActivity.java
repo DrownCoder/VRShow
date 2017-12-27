@@ -9,9 +9,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.study.xuan.stlshow.callback.OnReadCallBack;
-import com.study.xuan.stlshow.widget.STLView;
-import com.study.xuan.stlshow.widget.STLViewBuilder;
+import com.study.xuan.gifshow.widget.stlview.callback.OnReadCallBack;
+import com.study.xuan.gifshow.widget.stlview.widget.STLView;
+import com.study.xuan.gifshow.widget.stlview.widget.STLViewBuilder;
 
 public class STLActivity extends AppCompatActivity {
     private STLView mStl;

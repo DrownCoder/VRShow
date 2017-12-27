@@ -1,6 +1,6 @@
-package com.study.xuan.stlshow.callback;
+package com.study.xuan.gifshow.widget.stlview.callback;
 
-import com.study.xuan.stlshow.model.STLModel;
+import com.study.xuan.gifshow.widget.stlview.model.STLModel;
 
 public interface OnReadListener {
     void onstart();

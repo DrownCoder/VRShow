@@ -1,4 +1,4 @@
-package com.study.xuan.stlshow.widget;
+package com.study.xuan.gifshow.widget.stlview.widget;
 
 import android.app.Activity;
 import android.content.Context;
@@ -12,11 +12,13 @@ import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 
-import com.study.xuan.stlshow.callback.OnReadCallBack;
-import com.study.xuan.stlshow.callback.OnReadListener;
-import com.study.xuan.stlshow.model.STLModel;
+import com.study.xuan.gifshow.widget.stlview.callback.OnReadCallBack;
+import com.study.xuan.gifshow.widget.stlview.callback.OnReadListener;
+import com.study.xuan.gifshow.widget.stlview.model.STLModel;
+import com.study.xuan.gifshow.widget.stlview.util.STLUtils;
 
 /**
  * Author : xuan.
@@ -69,7 +71,11 @@ public class STLView extends GLSurfaceView {
     public STLView(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.mContext = context;
-        init();
+        if (STLUtils.checkSupported(mContext)) {
+            init();
+        }else{
+            Log.e("ERROR", "the phone can't support OpenGl ES2!");
+        }
     }
 
     private void init() {

@@ -1,10 +1,10 @@
-package com.study.xuan.stlshow.widget;
+package com.study.xuan.gifshow.widget.stlview.widget;
 
 import android.opengl.GLSurfaceView.Renderer;
 import android.opengl.GLU;
 import android.util.Log;
 
-import com.study.xuan.stlshow.model.STLModel;
+import com.study.xuan.gifshow.widget.stlview.model.STLModel;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
