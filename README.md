@@ -15,7 +15,7 @@ Step 2. Add the dependency
 	        compile 'com.github.sdfdzx:VRShow:v1.0.3'
 	}
 ### 1.全景360°GIF图
-![全景360°GIF图](https://github.com/sdfdzx/VRShow/blob/master/gif/gifdemofinal.gif)  
+![全景360°GIF图](https://github.com/sdfdzx/VRShow/blob/master/gif/gifdemo.gif)  
 
 **功能：**  
 >1.支持单指拖拽  
