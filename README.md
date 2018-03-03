@@ -12,7 +12,7 @@ VR全景图+Opengl3D模型展示
 Step 2. Add the dependency
 
 	dependencies {
-	        compile 'com.github.sdfdzx:VRShow:v1.0.3'
+	        compile 'com.github.sdfdzx:VRShow:v1.0.2'
 	}
 ### 1.全景360°GIF图
 ![全景360°GIF图](https://github.com/sdfdzx/VRShow/blob/master/gif/gifdemo.gif)  
